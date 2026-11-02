@@ -1,5 +1,11 @@
 # Review log
 
+Standing guidance for every monthly review: do not stop at incremental model swaps. Always also look for
+creative or emerging solutions to the underlying problem (independent failure modes at low token cost),
+for example non-LLM checkers (static analysis, fuzzing, property tests, mutation tests), test-first agent
+loops, adversarial or debate-style review, multi-vendor routing through an aggregator, local open-weight
+reviewers, review-quality evals with seeded bugs, and new harness features. Raise these as category B proposals.
+
 ## 2026-11-02
 
 Checked: README, review scripts, rules, settings; open `needs-approval` issues (none); current model strings
@@ -19,3 +25,9 @@ Proposed: nothing opened. Findings were not verifiable against primary sources:
 - `audits/` is mentioned in the README but does not exist in the repo.
 
 Next run: allow cursor.com and openai.com in the routine's network settings so these can be verified.
+
+### 2026-11-02 rerun
+
+Domains were added to the allowlist, but cursor.com, openai.com and openrouter.ai still did not resolve in
+this session (the proxy shows 403 denials; the policy change likely applies to new sessions only). Nothing
+further could be verified, so no changes or proposals. Retry in a fresh session.
