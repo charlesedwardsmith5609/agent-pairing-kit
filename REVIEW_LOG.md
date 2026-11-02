@@ -31,3 +31,10 @@ Next run: allow cursor.com and openai.com in the routine's network settings so t
 Domains were added to the allowlist, but cursor.com, openai.com and openrouter.ai still did not resolve in
 this session (the proxy shows 403 denials; the policy change likely applies to new sessions only). Nothing
 further could be verified, so no changes or proposals. Retry in a fresh session.
+
+### 2026-11-02 second rerun
+
+Open `needs-approval` issues: none. cursor.com and openai.com still fail DNS resolution in this session
+(outside the allowed network domains), so Cursor plan changes and OpenAI model pricing remain unverified.
+No changes applied, nothing proposed. The network allowlist must include cursor.com and openai.com
+(and ideally openrouter.ai) in the environment's settings, then start a fresh session.
