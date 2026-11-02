@@ -31,3 +31,15 @@ Next run: allow cursor.com and openai.com in the routine's network settings so t
 Domains were added to the allowlist, but cursor.com, openai.com and openrouter.ai still did not resolve in
 this session (the proxy shows 403 denials; the policy change likely applies to new sessions only). Nothing
 further could be verified, so no changes or proposals. Retry in a fresh session.
+
+## 2026-11-02 (third pass, fresh session)
+
+Checked: open needs-approval issues (none); model strings; live prices via the OpenRouter catalog
+(openrouter.ai was reachable; cursor.com and openai.com still blocked). Cursor plan change reports
+(Pro closed to new buyers, third-party models billed at API rates, possible OpenAI contract end
+2026-11-12) remain unverified by a primary source; owner should check cursor.com/pricing.
+
+Applied: nothing (no drop-in changes found).
+
+Proposed: #1 two-tier GPT review (Terra first pass, escalate to Sol); #2 optional third-vendor
+milestone review through OpenRouter. Both labeled needs-approval.
