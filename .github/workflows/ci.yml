@@ -38,7 +38,7 @@ jobs:
         if: matrix.profile == 'go'
         with:
           go-version: stable
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v7
         if: matrix.profile == 'python'
         with:
           python-version: '3.12'
