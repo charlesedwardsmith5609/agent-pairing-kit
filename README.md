@@ -90,7 +90,8 @@ single run and skips the fallback.
 (the diff, or the plan plus `REQUIREMENTS.md` and the agreements) is scanned with
 [gitleaks](https://github.com/gitleaks/gitleaks). A finding refuses the review, prints the
 redacted match, and sends nothing. If gitleaks isn't installed the review only warns and goes
-ahead unscanned, and `kitaudit` warns about it too. Install it once (for example
+ahead unscanned, and `kitaudit` warns about it too; set `REQUIRE_SECRET_SCAN=1` to refuse reviews
+when it is missing. Install it once (for example
 `brew install gitleaks`, or a release binary from its GitHub page). The scan covers only the text
 the scripts build. With Cursor as the reviewer, the agent may also read other files in the
 repository, which the scan doesn't see.
@@ -133,8 +134,8 @@ The kit lives in a public GitHub repo (MIT licensed, see `LICENSE`), and
 
 - `cross-review` runs `git add --intent-to-add` so new files appear in the diff. This stages no
   content; new files just show as added in `git status`.
-- CI (`.github/workflows/ci.yml`) runs shellcheck on every `*.sh` and a smoke run of
-  `new-project.sh` for `go` and `python`. Run the same locally with
+- CI (`.github/workflows/ci.yml`) runs shellcheck on every `*.sh`, `tests/test-secret-scan.sh`
+  (the secret scan with a fake gitleaks), and a smoke run of `new-project.sh` for `go` and `python`. Run the same locally with
   `git ls-files '*.sh' | xargs shellcheck -x` and `bash tests/smoke-new-project.sh go`.
 - Every profile is tested end to end: project creation, a passing check on the empty project,
   and seeded failures caught (Go race, mypy and pytest errors, TypeScript error, formatting,

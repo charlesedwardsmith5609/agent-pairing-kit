@@ -139,12 +139,18 @@ _review_meta() { [ -z "${REVIEW_META_FILE:-}" ] || printf '%s %s\n' "$REVIEW_USE
 
 # Scan the text about to leave this machine (the diff, or the plan plus requirements) for secrets.
 # A finding refuses the review and prints the redacted match. If gitleaks isn't installed this
-# only warns and the review goes ahead unscanned (install: https://github.com/gitleaks/gitleaks).
+# only warns and the review goes ahead unscanned, unless REQUIRE_SECRET_SCAN=1, which refuses
+# (install: https://github.com/gitleaks/gitleaks).
 # Exit code 7 is ours: it tells "secrets found" apart from gitleaks failing for another reason.
 review_scan_secrets() {
   local file="$1" out rc=0
   if ! command -v gitleaks >/dev/null 2>&1; then
+    if [ "${REQUIRE_SECRET_SCAN:-0}" = 1 ]; then
+      echo "REQUIRE_SECRET_SCAN=1 but gitleaks is not installed. Nothing was sent." >&2
+      return 1
+    fi
     echo "WARNING: gitleaks is not installed; sending this review to $REVIEW_USED_PROVIDER WITHOUT a secret scan." >&2
+    echo "         (set REQUIRE_SECRET_SCAN=1 to refuse reviews instead)" >&2
     return 0
   fi
   # `gitleaks stdin` is the current form; older 8.x releases only have `detect --pipe`.
