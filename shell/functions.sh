@@ -1,3 +1,4 @@
+# shellcheck shell=bash
 # agent-pairing-kit shell helpers. Source from ~/.bashrc:
 #   [ -f ~/agent-pairing-kit/shell/functions.sh ] && . ~/agent-pairing-kit/shell/functions.sh
 #
@@ -113,7 +114,7 @@ _pairing_explain() {
 # Internal: set NAME VALUE pairs in the env file, keeping every other line. Backs up to .prev.
 _pairing_env_set() {
   mkdir -p "$(dirname "$PAIRING_KIT_ENV")"
-  local tmp="$PAIRING_KIT_ENV.tmp" names="" n
+  local tmp="$PAIRING_KIT_ENV.tmp" names=""
   local args=("$@") i
   for ((i = 0; i < ${#args[@]}; i += 2)); do names="$names|${args[i]}"; done
   names="${names#|}"

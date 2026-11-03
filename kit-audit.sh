@@ -3,6 +3,7 @@
 # Usage: bash kit-audit.sh [--quiet]
 #   --quiet  print only warnings (used by newproj); always exits 0
 # Checks: installed vs latest versions (Claude Code, Cursor CLI, Go, govulncheck, Node, Expo SDK),
+# that gitleaks (the secret scan before a review is sent) is installed,
 # whether the saved review models still exist, and whether the Cursor CLI flags the review
 # scripts use are still in its help text. Read-only: it changes nothing.
 set -u
@@ -67,6 +68,14 @@ if [ -n "${OPENAI_API_KEY:-}" ]; then
     "${OPENAI_BASE_URL:-https://api.openai.com}/v1/models/$model")
   if [ "$code" = 200 ]; then ok openai-model "$model is available"
   else warn openai-model "$model check returned HTTP $code (run: keystatus)"; fi
+fi
+
+# gitleaks: the reviews scan what they send for secrets only when it is installed
+if command -v gitleaks >/dev/null 2>&1; then
+  have=$(gitleaks version 2>/dev/null | semver)
+  ok gitleaks "${have:-installed}"
+else
+  warn gitleaks "not installed; reviews are sent without a secret scan (https://github.com/gitleaks/gitleaks)"
 fi
 
 # Go and govulncheck

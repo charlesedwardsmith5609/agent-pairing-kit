@@ -24,6 +24,7 @@ done
 review_resolve "$provider" "$model" || exit 2
 
 if [ -z "$plan" ]; then
+  # shellcheck disable=SC2012  # plan names are plans/step-N.md, never odd characters
   plan=$(ls plans/step-*.md 2>/dev/null | sort -V | tail -n 1 || true)
   [ -n "$plan" ] || { echo "No plan found. Write the plan to plans/step-N.md first." >&2; exit 2; }
 fi
