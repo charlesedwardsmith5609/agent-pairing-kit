@@ -57,8 +57,10 @@ Prerequisites are checked before anything is created: Go (plus gcc for `-race` a
 | `scripts/` | Check runner and cross-review scripts copied into every project |
 | `shell/functions.sh` | `newproj`, `setreviewer`, `setkey`, `keystatus`, `kitaudit`, `kitsync`. Source it from `~/.bashrc` |
 | `kit-audit.sh` | What `kitaudit` runs: checks the tools and settings the kit depends on for drift |
-| `audits/` | Monthly audit reports from the scheduled research task |
+| `audits/` | Monthly audit reports from the scheduled research task (empty until the first one is saved) |
 | `new-project.sh` | What `newproj` calls: `bash new-project.sh PATH [profile ...]` |
+| `tests/smoke-new-project.sh` | Creates a project in a temp dir, asserts the files it must get, and runs its check. CI runs it for `go` and `python` |
+| `.github/workflows/ci.yml` | shellcheck on every `*.sh`, plus the smoke run |
 | `legacy-windows/` | The original Go-only PowerShell setup and check, kept for reference |
 
 To add a language, create `profiles/<lang>/` with the same six pieces and add it to the profile
@@ -84,6 +86,15 @@ If Cursor is the reviewer and a Cursor review fails (signed out, usage used up),
 back to your OpenAI key when one is saved. `--provider` on either review script picks one for a
 single run and skips the fallback.
 
+**Secret scan.** Both reviews send text to a third-party model, so before sending, the request
+(the diff, or the plan plus `REQUIREMENTS.md` and the agreements) is scanned with
+[gitleaks](https://github.com/gitleaks/gitleaks). A finding refuses the review, prints the
+redacted match, and sends nothing. If gitleaks isn't installed the review only warns and goes
+ahead unscanned, and `kitaudit` warns about it too. Install it once (for example
+`brew install gitleaks`, or a release binary from its GitHub page). The scan covers only the text
+the scripts build. With Cursor as the reviewer, the agent may also read other files in the
+repository, which the scan doesn't see.
+
 Settings live in `~/.config/pairing-kit.env`, and every change keeps the previous file as `.prev`.
 `keystatus` shows the active reviewer and checks it, showing only the last four characters of a
 key. Leave `ANTHROPIC_API_KEY` unset so Claude Code uses your subscription login.
@@ -101,7 +112,8 @@ AI tools change quickly, so the kit checks itself in two layers:
   `audits/YYYY-MM.md`: fix now, worth adopting, watch. It never changes the kit itself; you decide
   what to act on.
 
-The kit lives in a private GitHub repo, and `E:\Code\agent-pairing-kit` is a clone of it.
+The kit lives in a public GitHub repo (MIT licensed, see `LICENSE`), and
+`E:\Code\agent-pairing-kit` is a clone of it. Don't commit anything private to it.
 `kitsync` (and so `newproj`) pulls before copying, so changes pushed to GitHub arrive on their own.
 
 ## Workflow
@@ -121,6 +133,9 @@ The kit lives in a private GitHub repo, and `E:\Code\agent-pairing-kit` is a clo
 
 - `cross-review` runs `git add --intent-to-add` so new files appear in the diff. This stages no
   content; new files just show as added in `git status`.
+- CI (`.github/workflows/ci.yml`) runs shellcheck on every `*.sh` and a smoke run of
+  `new-project.sh` for `go` and `python`. Run the same locally with
+  `git ls-files '*.sh' | xargs shellcheck -x` and `bash tests/smoke-new-project.sh go`.
 - Every profile is tested end to end: project creation, a passing check on the empty project,
   and seeded failures caught (Go race, mypy and pytest errors, TypeScript error, formatting,
   `innerHTML`).

@@ -1,3 +1,4 @@
+# shellcheck shell=bash
 # Shared by plan-review.sh and cross-review.sh: send a review request to the chosen provider.
 # Source this file, then call:  review_call SYSTEM_FILE USER_FILE
 # It prints the review on stdout and sets REVIEW_USED_PROVIDER and REVIEW_USED_MODEL.
@@ -10,6 +11,8 @@
 #   auto       (default) cursor if it is configured, else openai, else anthropic.
 # If cursor was chosen by REVIEW_PROVIDER or auto (not by --provider) and the call fails, the
 # review falls back to openai when OPENAI_API_KEY is set.
+#
+# Before anything is sent, the request text is scanned with gitleaks (see review_scan_secrets).
 
 # Read the saved reviewer settings on every run, so a terminal opened before setreviewer or setkey
 # changed them can't send a stale model or key. --provider and --model still override them.
@@ -134,9 +137,36 @@ PY
 # callers read this file (REVIEW_META_FILE) rather than variables.
 _review_meta() { [ -z "${REVIEW_META_FILE:-}" ] || printf '%s %s\n' "$REVIEW_USED_PROVIDER" "$REVIEW_USED_MODEL" > "$REVIEW_META_FILE"; }
 
+# Scan the text about to leave this machine (the diff, or the plan plus requirements) for secrets.
+# A finding refuses the review and prints the redacted match. If gitleaks isn't installed this
+# only warns and the review goes ahead unscanned (install: https://github.com/gitleaks/gitleaks).
+# Exit code 7 is ours: it tells "secrets found" apart from gitleaks failing for another reason.
+review_scan_secrets() {
+  local file="$1" out rc=0
+  if ! command -v gitleaks >/dev/null 2>&1; then
+    echo "WARNING: gitleaks is not installed; sending this review to $REVIEW_USED_PROVIDER WITHOUT a secret scan." >&2
+    return 0
+  fi
+  # `gitleaks stdin` is the current form; older 8.x releases only have `detect --pipe`.
+  if gitleaks stdin --help 2>&1 | grep -q 'gitleaks stdin'; then
+    out=$(gitleaks stdin --no-banner --no-color --redact --verbose --exit-code 7 < "$file" 2>&1) || rc=$?
+  else
+    out=$(gitleaks detect --pipe --no-banner --no-color --redact --verbose --exit-code 7 < "$file" 2>&1) || rc=$?
+  fi
+  [ "$rc" -eq 0 ] && return 0
+  printf '%s\n' "$out" | tail -n 25 >&2
+  if [ "$rc" -eq 7 ]; then
+    echo "Secret scan found possible secrets (redacted above). Nothing was sent. Remove them from the change and rerun." >&2
+  else
+    echo "Secret scan failed (gitleaks exit $rc). Nothing was sent." >&2
+  fi
+  return 1
+}
+
 # review_call SYSTEM_FILE USER_FILE [explicit]   explicit=1 means --provider was given (no fallback)
 review_call() {
   local system_file="$1" user_file="$2" explicit="${3:-0}"
+  review_scan_secrets "$user_file" || return 1
   echo "Requesting review from $REVIEW_USED_PROVIDER ($REVIEW_USED_MODEL)..." >&2
   if [ "$REVIEW_USED_PROVIDER" = cursor ]; then
     if _review_cursor "$system_file" "$user_file"; then _review_meta; return 0; fi

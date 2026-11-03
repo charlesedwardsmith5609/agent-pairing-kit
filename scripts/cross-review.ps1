@@ -50,6 +50,29 @@ if ($diff.Length -gt $max) {
 $system = Get-Content -Raw -Encoding UTF8 'skills/review-checklist.md'
 $user = "Review this diff:`n`n``````diff`n$diff`n``````"
 
+# Secret scan before anything leaves this machine. A finding refuses the review. If gitleaks is
+# not installed this only warns and the review goes ahead unscanned.
+if (-not (Get-Command gitleaks -ErrorAction SilentlyContinue)) {
+    Write-Warning "gitleaks is not installed; sending this review to $Provider WITHOUT a secret scan."
+} else {
+    $ErrorActionPreference = 'Continue'   # native stderr must not throw while we capture it
+    # `gitleaks stdin` is the current form; older 8.x releases only have `detect --pipe`.
+    $useStdin = (& gitleaks stdin --help 2>&1 | Out-String) -match 'gitleaks stdin'
+    $gl = if ($useStdin) { @('stdin') } else { @('detect', '--pipe') }
+    $scan = $user | & gitleaks @gl --no-banner --no-color --redact --verbose --exit-code 7 2>&1 | Out-String
+    $scanExit = $LASTEXITCODE
+    $ErrorActionPreference = 'Stop'
+    if ($scanExit -ne 0) {
+        Write-Host (($scan -split "`r?`n" | Select-Object -Last 25) -join "`n")
+        if ($scanExit -eq 7) {
+            Write-Error "Secret scan found possible secrets (redacted above). Nothing was sent. Remove them from the change and rerun."
+        } else {
+            Write-Error "Secret scan failed (gitleaks exit $scanExit). Nothing was sent."
+        }
+        exit 1
+    }
+}
+
 if ($Provider -eq 'openai') {
     $req = @{ model = $Model; messages = @(@{ role = 'system'; content = $system }, @{ role = 'user'; content = $user }) }
     $headers = @{ Authorization = "Bearer $key" }

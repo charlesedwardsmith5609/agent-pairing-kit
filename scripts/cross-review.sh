@@ -42,6 +42,7 @@ fi
 
 work=$(mktemp -d)
 trap 'rm -rf "$work"' EXIT
+# shellcheck disable=SC2016  # the backticks are literal markdown fences, not a command
 printf 'Review this diff:\n\n```diff\n%s\n```\n' "$diff" > "$work/user.md"
 
 export REVIEW_META_FILE="$work/meta"
