@@ -34,7 +34,7 @@ jobs:
         profile: [go, python]
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-go@v5
+      - uses: actions/setup-go@v7
         if: matrix.profile == 'go'
         with:
           go-version: stable
