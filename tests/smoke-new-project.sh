@@ -23,7 +23,7 @@ bash "$kit/new-project.sh" "$target" "$@"
 
 cd "$target"
 for f in AGENTS.md CLAUDE.md .pairing-profiles .gitignore .gitattributes \
-  scripts/check.sh scripts/plan-review.sh scripts/cross-review.sh scripts/review-call.sh \
+  scripts/check.sh scripts/misbehavior-check.sh scripts/plan-review.sh scripts/cross-review.sh scripts/review-call.sh \
   skills/review-checklist.md skills/plan-review-checklist.md \
   .cursor/rules/pairing-mode.mdc .claude/settings.json .claude/commands/check.md; do
   [ -f "$f" ] || fail "missing $f"

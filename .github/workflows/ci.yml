@@ -25,6 +25,8 @@ jobs:
       - uses: actions/checkout@v4
       - name: secret scan behaviour (fake gitleaks)
         run: bash tests/test-secret-scan.sh
+      - name: misbehavior check heuristics
+        run: bash tests/test-misbehavior-check.sh
 
   smoke:
     runs-on: ubuntu-latest

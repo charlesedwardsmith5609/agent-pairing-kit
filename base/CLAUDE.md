@@ -9,8 +9,10 @@ visible so each decision can be reviewed before it lands.
 1. **Plan before code, and get it reviewed.**
    - Before the first plan, write the agreed requirements to `REQUIREMENTS.md` and ask the human
      to confirm them.
-   - For each step, write the plan to `plans/step-N.md`: files touched, types, who owns any
-     shared state, and the tests you will add.
+   - For each step, write the plan to `plans/step-N.md`: types, who owns any shared state, the
+     tests you will add, and a `## Files` section listing every path this step may touch as
+     markdown bullets (for example `- path/one.go`). The validation gate uses that list when
+     present; omit it only when the human says the step has no file scope yet.
    - Then run `bash scripts/plan-review.sh plans/step-N.md`. Present the plan's key points, each
      reviewer finding with your assessment (agree or disagree, with a reason), and wait for
      approval before writing code.
@@ -23,7 +25,7 @@ visible so each decision can be reviewed before it lands.
    allowed. To propose anything else, name it and say what it replaces and why.
 4. **Done means the check passes.** After every change, run `bash scripts/check.sh` and report
    the result per stage. A clean compile is not done. Never claim something builds or passes
-   without running it.
+   without running it. Set `PAIRING_STRICT=1` to turn agent-misbehavior warnings into failures.
 5. **Behavioral tests.** Test through real interfaces (a real listener on `127.0.0.1` port 0,
    real HTTP requests, real DOM). Every wait in a test has a timeout so a broken test fails
    instead of hanging. No sleeps for synchronization.
@@ -35,6 +37,13 @@ visible so each decision can be reviewed before it lands.
    assumption at the top of your reply.
 9. **Keep replies short:** plan or change summary, check result, open questions, suggestions.
    Prefer lists over wide tables; the terminal may be narrow.
+10. **Tool-call policy.** Stay inside the project's tool settings and this allowlist unless the
+    human expands it in the approved plan.
+    - Network: only `127.0.0.1` / `localhost` for tests. Any other host needs prior approval.
+    - Do not read `/proc/*/environ`, `.env` / `.env.*`, `/var/run/secrets/**`, or cloud instance
+      metadata (`169.254.169.254`, `metadata.google.internal`).
+    - Do not invent tools. `WebFetch` and other network tools require an ask/approval; Cursor
+      has no harness interceptor here, so the agreements plus `scripts/check.sh` are the gate.
 
 ## Commands
 

@@ -39,12 +39,13 @@ Prerequisites are checked before anything is created: Go (plus gcc for `-race` a
 | `CLAUDE.md` / `AGENTS.md` | Base working agreements plus one section per language in the project |
 | `.cursor/rules/pairing-mode.mdc` | Makes Cursor apply the same agreements |
 | `skills/*.md` | The skill for each language, plus `review-checklist.md` combining base and language-specific review focus |
-| `scripts/check.sh` | Runs every language's checks (from `scripts/checks/`) per `.pairing-profiles`, with a summary |
+| `scripts/check.sh` | Runs agent-misbehavior heuristics, then every language's checks (from `scripts/checks/`) per `.pairing-profiles`, with a summary. Set `PAIRING_STRICT=1` to fail on misbehavior warnings |
+| `scripts/misbehavior-check.sh` | Deterministic diff checks: skipped tests, gate-file edits, test-only changes, and (when the plan has `## Files`) paths outside the approved step |
 | `scripts/review-call.sh` | Shared by both reviews: sends the request to Cursor, OpenAI or Anthropic |
 | `scripts/plan-review.sh` | Sends a plan in `plans/step-N.md`, plus `REQUIREMENTS.md` and the agreements, to a second AI provider before any code exists |
 | `scripts/cross-review.sh` / `.ps1` | Sends the current diff (minus lockfiles) to a second AI provider; saves to `.reviews/` |
 | `.claude/commands/` | `/check`, `/plan-review` and `/cross-review` |
-| `.claude/settings.json` | Turns off claude.ai connectors and the artifacts tool for the project |
+| `.claude/settings.json` | Turns off claude.ai connectors and artifacts; asks before `WebFetch`; denies reads of `.env`, `/proc/**/environ`, k8s secrets, and cloud-metadata curl/wget |
 | `.claude/settings.local.json` | Per-machine, gitignored: switches off every plugin installed on your account (and their MCP servers) for this project only |
 | `.pairing-setup.log` | Tool output from setup (gitignored) |
 
@@ -135,7 +136,8 @@ The kit lives in a public GitHub repo (MIT licensed, see `LICENSE`), and
 - `cross-review` runs `git add --intent-to-add` so new files appear in the diff. This stages no
   content; new files just show as added in `git status`.
 - CI (`.github/workflows/ci.yml`) runs shellcheck on every `*.sh`, `tests/test-secret-scan.sh`
-  (the secret scan with a fake gitleaks), and a smoke run of `new-project.sh` for `go` and `python`. Run the same locally with
+  (the secret scan with a fake gitleaks), `tests/test-misbehavior-check.sh`, and a smoke run of
+  `new-project.sh` for `go` and `python`. Run the same locally with
   `git ls-files '*.sh' | xargs shellcheck -x` and `bash tests/smoke-new-project.sh go`.
 - Every profile is tested end to end: project creation, a passing check on the empty project,
   and seeded failures caught (Go race, mypy and pytest errors, TypeScript error, formatting,

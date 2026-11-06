@@ -9,6 +9,7 @@ Run the same checks CI runs:
 ```bash
 shellcheck -x scripts/*.sh tests/*.sh
 bash tests/test-secret-scan.sh
+bash tests/test-misbehavior-check.sh
 bash tests/smoke-new-project.sh python
 ```
 
