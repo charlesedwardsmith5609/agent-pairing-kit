@@ -1,9 +1,10 @@
 #!/usr/bin/env bash
-# Validation gate: runs the checks for every language in this project.
+# Validation gate: agent-misbehavior heuristics, then every language's checks.
 # The project's languages and directories are listed in .pairing-profiles.
 # Usage: bash scripts/check.sh
 # Staged additions are scanned with the same gitleaks command as the reviews.
 # A match warns. Set PAIRING_STRICT=1 to fail the gate. This is not a separate stage.
+# The same knob fails agent-misbehavior warnings.
 set -u
 root="$(cd "$(dirname "$0")/.." && pwd)"
 list="$root/.pairing-profiles"
@@ -86,6 +87,15 @@ if ! scan_staged_additions; then
   results="$results\n  staged secrets: FAIL"
   fail=1
 fi
+
+printf '\n######## misbehavior\n'
+if bash "$root/scripts/misbehavior-check.sh" "$root"; then
+  results="$results\n  misbehavior: PASS"
+else
+  results="$results\n  misbehavior: FAIL"
+  fail=1
+fi
+
 while read -r profile dir <&3; do
   [ -n "${profile:-}" ] || continue
   printf '\n######## %s (%s)\n' "$profile" "$dir"

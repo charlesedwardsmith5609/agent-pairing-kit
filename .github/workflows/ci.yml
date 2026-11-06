@@ -27,6 +27,8 @@ jobs:
         run: |
           bash tests/test-secret-scan.sh
           bash tests/test-staged-secret-scan.sh
+      - name: misbehavior check heuristics
+        run: bash tests/test-misbehavior-check.sh
 
   smoke:
     runs-on: ubuntu-latest

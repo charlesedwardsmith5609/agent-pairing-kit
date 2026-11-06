@@ -4,6 +4,9 @@ Format follows Keep a Changelog. Dates are UTC.
 
 ## [Unreleased] - 2026-11-02
 
+- Tool-call policy in working agreements plus Claude Code `permissions` (ask `WebFetch`; deny environ/env/secrets/metadata probes)
+- Agent-misbehavior stage in `scripts/check.sh` (warn by default; `PAIRING_STRICT=1` fails): skipped tests, gate-file edits, test-only diffs, plan `## Files` scope when parseable
+- Note Go 1.27+ `encoding/json/v2` stricter defaults in the Go network-service skill
 - Security defaults in the base agreements: bound external input, deny outbound hosts by default, never log secrets, no secrets in prompts or config, parameterized queries (LSCBench, TLDR InfoSec 2026-11-09)
 - Security-review pass for SSRF, information exposure, and secret handling, named in the cross-review prompt (same report)
 - Secrets stay out of agent-to-agent channels; the check warns when staged additions match the gitleaks scan and fails when PAIRING_STRICT=1 (The Register via TLDR InfoSec 2026-11-09)
