@@ -40,6 +40,14 @@ visible so each decision can be reviewed before it lands.
 10. **Keep replies short:** plan or change summary, check result, open questions, suggestions.
     Prefer lists over wide tables; the terminal may be narrow.
 
+## Security defaults
+
+- Validate and bound every external input before it is used.
+- Deny outbound hosts by default; allow a host only when the plan names it (SSRF).
+- Never log or echo secrets, tokens, or credentials.
+- Keep secrets out of prompts, config, and source.
+- Parameterize queries; do not concatenate untrusted input into them.
+
 ## Commands
 
 | Purpose                                             | Command                        |

@@ -28,11 +28,27 @@ for f in AGENTS.md CLAUDE.md .pairing-profiles .gitignore .gitattributes \
   .cursor/rules/pairing-mode.mdc .claude/settings.json .claude/commands/check.md; do
   [ -f "$f" ] || fail "missing $f"
 done
-for p in "$@"; do
+# fullstack is a new-project.sh mode: Go API plus web, not a check-script name.
+profiles=("$@")
+if [ "${#profiles[@]}" -eq 1 ] && [ "${profiles[0]}" = fullstack ]; then
+  profiles=(go web)
+fi
+for p in "${profiles[@]}"; do
   [ -f "scripts/checks/$p.sh" ] || fail "missing scripts/checks/$p.sh"
   grep -q "^$p " .pairing-profiles || fail "$p not listed in .pairing-profiles"
 done
 cmp -s AGENTS.md CLAUDE.md || fail "AGENTS.md and CLAUDE.md differ"
+security_phrases=(
+  '## Security defaults'
+  'Validate and bound every external input'
+  'Deny outbound hosts by default'
+  'Never log or echo secrets'
+  'Keep secrets out of prompts'
+  'Parameterize queries'
+)
+for phrase in "${security_phrases[@]}"; do
+  grep -qF "$phrase" CLAUDE.md || fail "CLAUDE.md missing: $phrase"
+done
 [ -z "$(git status --porcelain)" ] || fail "working tree not clean after setup"
 git log -1 --format=%s | grep -q 'agent pairing kit' || fail "unexpected initial commit"
 

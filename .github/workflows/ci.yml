@@ -31,13 +31,17 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        profile: [go, python]
+        profile: [go, python, web, fullstack]
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-go@v5
-        if: matrix.profile == 'go'
+        if: matrix.profile == 'go' || matrix.profile == 'fullstack'
         with:
           go-version: stable
+      - uses: actions/setup-node@v4
+        if: matrix.profile == 'web' || matrix.profile == 'fullstack'
+        with:
+          node-version: '20'
       - uses: actions/setup-python@v5
         if: matrix.profile == 'python'
         with:
