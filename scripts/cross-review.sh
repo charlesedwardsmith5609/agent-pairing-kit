@@ -43,7 +43,7 @@ fi
 work=$(mktemp -d)
 trap 'rm -rf "$work"' EXIT
 # shellcheck disable=SC2016  # the backticks are literal markdown fences, not a command
-printf 'Review this diff:\n\n```diff\n%s\n```\n' "$diff" > "$work/user.md"
+printf 'Review this diff. Apply the security-review pass: SSRF, information exposure, and secret handling.\n\n```diff\n%s\n```\n' "$diff" > "$work/user.md"
 
 export REVIEW_META_FILE="$work/meta"
 review=$(review_call skills/review-checklist.md "$work/user.md" "$explicit")

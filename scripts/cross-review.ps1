@@ -48,7 +48,7 @@ if ($diff.Length -gt $max) {
 }
 
 $system = Get-Content -Raw -Encoding UTF8 'skills/review-checklist.md'
-$user = "Review this diff:`n`n``````diff`n$diff`n``````"
+$user = "Review this diff. Apply the security-review pass: SSRF, information exposure, and secret handling.`n`n``````diff`n$diff`n``````"
 
 # Secret scan before anything leaves this machine. A finding refuses the review. If gitleaks is
 # not installed this only warns and the review goes ahead unscanned.
