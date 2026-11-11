@@ -24,7 +24,9 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: secret scan behaviour (fake gitleaks)
-        run: bash tests/test-secret-scan.sh
+        run: |
+          bash tests/test-secret-scan.sh
+          bash tests/test-staged-secret-scan.sh
 
   smoke:
     runs-on: ubuntu-latest

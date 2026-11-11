@@ -45,6 +45,7 @@ security_phrases=(
   'Never log or echo secrets'
   'Keep secrets out of prompts'
   'Parameterize queries'
+  'Never paste tokens or credentials'
 )
 for phrase in "${security_phrases[@]}"; do
   grep -qF "$phrase" CLAUDE.md || fail "CLAUDE.md missing: $phrase"

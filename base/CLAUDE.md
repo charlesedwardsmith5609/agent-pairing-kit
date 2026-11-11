@@ -47,6 +47,7 @@ visible so each decision can be reviewed before it lands.
 - Never log or echo secrets, tokens, or credentials.
 - Keep secrets out of prompts, config, and source.
 - Parameterize queries; do not concatenate untrusted input into them.
+- Never paste tokens or credentials into a tool call, forum, issue comment, or sub-agent prompt, and never run an install script fetched from a third party without asking.
 
 ## Commands
 

@@ -137,6 +137,24 @@ PY
 # callers read this file (REVIEW_META_FILE) rather than variables.
 _review_meta() { [ -z "${REVIEW_META_FILE:-}" ] || printf '%s %s\n' "$REVIEW_USED_PROVIDER" "$REVIEW_USED_MODEL" > "$REVIEW_META_FILE"; }
 
+# Run gitleaks on FILE. Prints the tool's output.
+# Returns 0 when the text is clean, 7 when it matches, 127 when gitleaks is not installed,
+# or gitleaks' own exit code when the scanner fails.
+# `gitleaks stdin` is the current form; older 8.x releases only have `detect --pipe`.
+review_gitleaks_scan() {
+  local file="$1" out rc=0
+  if ! command -v gitleaks >/dev/null 2>&1; then
+    return 127
+  fi
+  if gitleaks stdin --help 2>&1 | grep -q 'gitleaks stdin'; then
+    out=$(gitleaks stdin --no-banner --no-color --redact --verbose --exit-code 7 < "$file" 2>&1) || rc=$?
+  else
+    out=$(gitleaks detect --pipe --no-banner --no-color --redact --verbose --exit-code 7 < "$file" 2>&1) || rc=$?
+  fi
+  printf '%s\n' "$out"
+  return "$rc"
+}
+
 # Scan the text about to leave this machine (the diff, or the plan plus requirements) for secrets.
 # A finding refuses the review and prints the redacted match. If gitleaks isn't installed this
 # only warns and the review goes ahead unscanned, unless REQUIRE_SECRET_SCAN=1, which refuses
@@ -144,7 +162,8 @@ _review_meta() { [ -z "${REVIEW_META_FILE:-}" ] || printf '%s %s\n' "$REVIEW_USE
 # Exit code 7 is ours: it tells "secrets found" apart from gitleaks failing for another reason.
 review_scan_secrets() {
   local file="$1" out rc=0
-  if ! command -v gitleaks >/dev/null 2>&1; then
+  out=$(review_gitleaks_scan "$file") || rc=$?
+  if [ "$rc" -eq 127 ]; then
     if [ "${REQUIRE_SECRET_SCAN:-0}" = 1 ]; then
       echo "REQUIRE_SECRET_SCAN=1 but gitleaks is not installed. Nothing was sent." >&2
       return 1
@@ -152,12 +171,6 @@ review_scan_secrets() {
     echo "WARNING: gitleaks is not installed; sending this review to $REVIEW_USED_PROVIDER WITHOUT a secret scan." >&2
     echo "         (set REQUIRE_SECRET_SCAN=1 to refuse reviews instead)" >&2
     return 0
-  fi
-  # `gitleaks stdin` is the current form; older 8.x releases only have `detect --pipe`.
-  if gitleaks stdin --help 2>&1 | grep -q 'gitleaks stdin'; then
-    out=$(gitleaks stdin --no-banner --no-color --redact --verbose --exit-code 7 < "$file" 2>&1) || rc=$?
-  else
-    out=$(gitleaks detect --pipe --no-banner --no-color --redact --verbose --exit-code 7 < "$file" 2>&1) || rc=$?
   fi
   [ "$rc" -eq 0 ] && return 0
   printf '%s\n' "$out" | tail -n 25 >&2
