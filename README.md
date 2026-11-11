@@ -123,11 +123,13 @@ The kit lives in a public GitHub repo (MIT licensed, see `LICENSE`), and
 2. **Scaffold** boilerplate in one ask.
 3. Claude writes the agreed requirements to `REQUIREMENTS.md`, then a **plan** for each step to
    `plans/step-N.md`, **runs the plan review**, and presents the plan with the reviewer's findings.
-   Approve or change it.
-4. **Review the diff** before keeping it. Reject anything from the skill's "reject on sight" list
+   Approve or change it. The plan's test list is natural language you agree before any code.
+4. **Tests first.** Write those tests so they fail, then implement until they pass. Scaffold
+   (step 2) skips this.
+5. **Review the diff** before keeping it. Reject anything from the skill's "reject on sight" list
    and record why.
-5. **Run the check.** Green means commit, so you can roll back cleanly.
-6. At milestones, **run the cross-model review** and decide which findings to act on. A
+6. **Run the check.** Green means commit, so you can roll back cleanly.
+7. At milestones, **run the cross-model review** and decide which findings to act on. A
    reasoned rejection of a finding is as valuable as accepting one.
 
 ## Notes

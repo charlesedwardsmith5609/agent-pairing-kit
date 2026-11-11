@@ -24,17 +24,21 @@ visible so each decision can be reviewed before it lands.
 4. **Done means the check passes.** After every change, run `bash scripts/check.sh` and report
    the result per stage. A clean compile is not done. Never claim something builds or passes
    without running it.
-5. **Behavioral tests.** Test through real interfaces (a real listener on `127.0.0.1` port 0,
+5. **Test-first.** Before writing code for a step, agree a natural-language test list with the
+   human. Write those tests so they fail, then implement until they pass. The test list in
+   `plans/step-N.md` is that agreed list. Exception: when the human says "scaffold", write
+   boilerplate directly.
+6. **Behavioral tests.** Test through real interfaces (a real listener on `127.0.0.1` port 0,
    real HTTP requests, real DOM). Every wait in a test has a timeout so a broken test fails
    instead of hanging. No sleeps for synchronization.
-6. **Name the ownership.** For any change that touches shared state, state which thread,
+7. **Name the ownership.** For any change that touches shared state, state which thread,
    goroutine, task or component owns it and how others reach it.
-7. **Load the skills first.** Read the skill files listed in the relevant language section
+8. **Load the skills first.** Read the skill files listed in the relevant language section
    before writing code in that area.
-8. **Ask, don't guess.** If a requirement is ambiguous, ask. If you must assume, put the
+9. **Ask, don't guess.** If a requirement is ambiguous, ask. If you must assume, put the
    assumption at the top of your reply.
-9. **Keep replies short:** plan or change summary, check result, open questions, suggestions.
-   Prefer lists over wide tables; the terminal may be narrow.
+10. **Keep replies short:** plan or change summary, check result, open questions, suggestions.
+    Prefer lists over wide tables; the terminal may be narrow.
 
 ## Commands
 
