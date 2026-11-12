@@ -44,7 +44,7 @@ jobs:
         if: matrix.profile == 'web' || matrix.profile == 'fullstack'
         with:
           node-version: '20'
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v7
         if: matrix.profile == 'python'
         with:
           python-version: '3.12'
