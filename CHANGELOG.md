@@ -4,6 +4,7 @@ Format follows Keep a Changelog. Dates are UTC.
 
 ## [Unreleased] - 2026-11-02
 
+- `new-project.sh` copies `scripts/assertion-check.sh` so a generated project's check can run the assertion scan.
 - Working agreements note that every enabled tool and MCP server costs context tokens on every turn. `docs/sandboxed-devcontainer.md` is a docs-only pointer for a sandboxed devcontainer. No devcontainer file is added.
 - Assertion scan in `scripts/check.sh` reads test files (not diffs) and warns when a test has no assertion. `PAIRING_STRICT=1` fails the gate.
 - Review checklist section "Test quality": tests must assert behavior, must not be assertion-free, and must not only mirror the implementation.
