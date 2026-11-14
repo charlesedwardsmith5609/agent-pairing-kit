@@ -48,7 +48,7 @@ Prerequisites are checked before anything is created: Go (plus gcc for `-race` a
 | `.claude/commands/` | `/check`, `/plan-review` and `/cross-review` |
 | `.pairing-profiles` | One `profile dir` line per language; `scripts/check.sh` reads it |
 | `.gitignore`, `.gitattributes` | Ignore rules for the profiles in the project (including `.reviews/` and `.claude/settings.local.json`), and line-ending rules |
-| `.claude/settings.json` | Turns off claude.ai connectors and artifacts; asks before `WebFetch`; denies reads of `.env`, `/proc/**/environ`, k8s secrets, and cloud-metadata curl/wget |
+| `.claude/settings.json` | Turns off claude.ai connectors and artifacts; asks before `WebFetch`; denies reads of `.env`, `//proc/**/environ`, k8s secrets, and cloud-metadata curl/wget |
 | `.claude/settings.local.json` | Per-machine, gitignored: switches off every plugin installed on your account (and their MCP servers) for this project only |
 | `.pairing-setup.log` | Tool output from setup (gitignored) |
 

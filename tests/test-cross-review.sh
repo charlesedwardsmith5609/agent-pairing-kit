@@ -172,6 +172,19 @@ PS
   check "ps1 -Include .env exits 2" 2 "$rc"
   out=$(run_ps); rc=$?
   if [ "$rc" -ne 0 ] && printf '%s' "$out" | grep -q 'gitleaks is not installed'; then ok "ps1 without gitleaks sends nothing"; else bad "ps1 without gitleaks did not refuse (rc=$rc)"; fi
+  # With a gitleaks that records its arguments, the scan must be `gitleaks stdin ...` (a bare
+  # string splatted by @gl once became `gitleaks s t d i n` and every run failed).
+  glbin="$work/gl-ps"; mkdir -p "$glbin"
+  cat > "$glbin/gitleaks" <<'SH'
+#!/usr/bin/env bash
+if [ "${1:-}" = stdin ] && [ "${2:-}" = --help ]; then echo "gitleaks stdin"; exit 0; fi
+printf '%s\n' "$*" >> "${GL_LOG:?}"; cat >/dev/null; exit 0
+SH
+  chmod +x "$glbin/gitleaks"; : > "$work/gl.log"
+  ( cd "$ps" && env -i HOME="$work/home" PATH="$glbin:/usr/bin:/bin:$(dirname "$(command -v pwsh)")" GL_LOG="$work/gl.log" \
+    DOTNET_SYSTEM_GLOBALIZATION_INVARIANT=1 OPENAI_API_KEY=dummy OPENAI_BASE_URL=http://127.0.0.1:9 \
+    pwsh -NoProfile -File scripts/cross-review.ps1 >/dev/null 2>&1 )
+  if grep -q '^stdin --no-banner' "$work/gl.log"; then ok "ps1 invokes gitleaks as 'stdin ...'"; else bad "ps1 gitleaks arguments wrong: $(head -1 "$work/gl.log")"; fi
 else
   echo "skip: pwsh not installed; cross-review.ps1 was only compared as text"
 fi
