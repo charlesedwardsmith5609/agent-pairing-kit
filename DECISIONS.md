@@ -29,3 +29,13 @@ Options: add a `devcontainer.json` with guessed security fields; write a short d
 Choice: `docs/sandboxed-devcontainer.md` states the operational rules in prose. Specific `devcontainer.json` fields are marked needs verification. `base/CLAUDE.md` points at that file. Generated projects copy `CLAUDE.md`, so the pointer names the kit path rather than a file inside the new project.
 
 Why: Inventing spec fields would present an unverified template as a boundary.
+
+## 2026-11-14: Misbehavior check reads changed working-tree files, not diff text (D2)
+
+Context: The earlier misbehavior check grepped added lines of `git diff` for skip markers. That misses a marker already present in a changed file and ties the result to diff formatting. It also created a temp file in the repo root, which then counted as a change. This supersedes the diff-grep description of `scripts/misbehavior-check.sh`; the 2026-11-13 entry on the assertion scan is unchanged.
+
+Options: keep the diff grep; read the content of changed files.
+
+Choice: The changed set is `git ls-files -m -o --exclude-standard` plus `git diff --cached --name-only`. Paths that no longer exist are skipped for content checks. The skip-marker scan reads the content of changed test files and `*.json` / `*.config.*` files. A marker already present in a changed file is reported (restrictive reading). Temp files come from `mktemp`. `scripts/assertion-check.sh` and `scripts/review-call.sh` are validation gate files. Deleted gate files are still reported.
+
+Why: Content of the files as they are on disk is what the tests run. Edits committed and unchanged in the working tree are not seen; that is accepted.

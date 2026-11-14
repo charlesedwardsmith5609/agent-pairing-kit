@@ -91,4 +91,44 @@ printf '#!/bin/sh\necho gate\n' > scripts/check.sh
 run_check; check "gate file warns exits 0" 0 $?
 check_out "gate file message" "validation gate file changed: scripts/check.sh" "$work/out"
 
+# --- gate files added in step 1 ---
+for g in scripts/assertion-check.sh scripts/review-call.sh; do
+  setup_repo
+  mkdir -p scripts
+  printf '#!/bin/sh\necho x\n' > "$g"
+  run_check; check "gate $g exits 0" 0 $?
+  check_out "gate $g reported" "validation gate file changed: $g" "$work/out"
+done
+
+# --- skip markers: staged, untracked, ignored, deleted ---
+setup_repo
+printf 'package main\nimport "testing"\nfunc TestHello(t *testing.T) {\n\tt.Skip("later")\n}\n' > main_test.go
+git add main_test.go
+run_check; check "staged skip exits 0" 0 $?
+check_out "staged skip reported" "skipped/disabled" "$work/out"
+PAIRING_STRICT=1 run_check; check "staged skip strict exits 1" 1 $?
+
+setup_repo
+printf 'package main\nimport "testing"\nfunc TestNew(t *testing.T) {\n\tt.Skip("x")\n}\n' > new_test.go
+run_check; check_out "untracked skip reported" "skipped/disabled" "$work/out"
+
+setup_repo
+rm main.go
+run_check; check "deleted tracked file exits 0" 0 $?
+check_not_out "deleted file no error" "No such file" "$work/out"
+
+setup_repo
+printf 'ign_test.go\n' > .gitignore
+git add .gitignore; git commit -q -m ign
+printf 'package main\nfunc TestX(t *testing.T) {\n\tt.Skip("x")\n}\n' > ign_test.go
+run_check
+check_not_out "ignored file not reported" "skipped/disabled" "$work/out"
+
+setup_repo
+run_check; check_out "clean repo still OK (no changes)" "misbehavior: OK (no changes)" "$work/out"
+
+setup_repo
+run_check
+if ls "$work/repo"/.misbehavior-* >/dev/null 2>&1; then echo "FAIL temp file left in repo"; fail=1; else echo "ok   no temp file in repo root"; fi
+
 exit "$fail"

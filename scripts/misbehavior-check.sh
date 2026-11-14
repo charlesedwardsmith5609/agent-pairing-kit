@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Deterministic agent-misbehavior heuristics over the working tree diff.
+# Deterministic agent-misbehavior heuristics over changed working-tree files (not diff text).
 # Warns by default; set PAIRING_STRICT=1 to fail when findings exist.
 # Usage: bash scripts/misbehavior-check.sh
 # Expects to run from the project root (or pass ROOT as $1).
@@ -25,17 +25,21 @@ report() {
   findings=1
 }
 
-# Collect changed paths: unstaged, staged, and untracked (excluding ignored).
-changed_file="$root/.misbehavior-changed.$$"
+# Changed set: modified and untracked-not-ignored files in the working tree, plus staged paths.
+# Paths that no longer exist are dropped from content checks (kept in raw_file for gate checks).
+changed_file=$(mktemp) || exit 2
+raw_file=$(mktemp) || exit 2
+allowed_file=$(mktemp) || exit 2
+trap 'rm -f "$changed_file" "$raw_file" "$allowed_file"' EXIT
 {
-  git diff --name-only HEAD 2>/dev/null || true
-  git diff --cached --name-only HEAD 2>/dev/null || true
-  git ls-files --others --exclude-standard 2>/dev/null || true
-} | sed '/^$/d' | sort -u > "$changed_file"
+  git ls-files -m -o --exclude-standard 2>/dev/null || true
+  git diff --cached --name-only 2>/dev/null || true
+} | sed '/^$/d' | sort -u > "$raw_file"
+while IFS= read -r path; do
+  [ -e "$path" ] && printf '%s\n' "$path"
+done < "$raw_file" > "$changed_file"
 
-trap 'rm -f "$changed_file"' EXIT
-
-if [ ! -s "$changed_file" ]; then
+if [ ! -s "$raw_file" ]; then
   echo "misbehavior: OK (no changes)"
   exit 0
 fi
@@ -59,7 +63,7 @@ is_scope_exempt() {
 
 is_gate_path() {
   case "$1" in
-    scripts/check.sh|scripts/misbehavior-check.sh|.pairing-profiles) return 0 ;;
+    scripts/check.sh|scripts/misbehavior-check.sh|scripts/assertion-check.sh|scripts/review-call.sh|.pairing-profiles) return 0 ;;
     scripts/checks/*) return 0 ;;
     .github/workflows/*) return 0 ;;
     *) return 1 ;;
@@ -72,30 +76,21 @@ while IFS= read -r path; do
   if is_gate_path "$path"; then
     report "validation gate file changed: $path"
   fi
-done < "$changed_file"
+done < "$raw_file"
 
-# --- Newly skipped tests / disabled validation markers in the diff ---
-# Look at added lines (+) in the combined staged+unstaged diff.
-diff_text=$(git diff HEAD 2>/dev/null || true)
-diff_text+=$'\n'
-diff_text+=$(git diff --cached HEAD 2>/dev/null || true)
-
+# --- Skipped tests / disabled validation markers in changed files ---
+# Reads the content of changed test files and *.json / *.config.* files, not diff text.
 skip_line_re='t\.Skip\(|\.skip\(|xit\(|xdescribe\(|test\.skip|it\.skip|describe\.skip|@pytest\.mark\.skip|passWithNoTests'
-skip_diff_re="^\\+.*(${skip_line_re})"
-if printf '%s\n' "$diff_text" | grep -E "$skip_diff_re" >/dev/null 2>&1; then
-  report "diff adds skipped/disabled test or validation marker"
-else
-  # Untracked files do not appear in git diff; scan their contents when listed.
-  while IFS= read -r path; do
-    [ -n "$path" ] || continue
-    [ -f "$path" ] || continue
-    git ls-files --error-unmatch "$path" >/dev/null 2>&1 && continue
-    if grep -E "$skip_line_re" "$path" >/dev/null 2>&1; then
-      report "untracked file adds skipped/disabled test or validation marker: $path"
-      break
-    fi
-  done < "$changed_file"
-fi
+while IFS= read -r path; do
+  [ -f "$path" ] || continue
+  case "$path" in
+    *.json|*.config.*) ;;
+    *) is_test_path "$path" || continue ;;
+  esac
+  if grep -E "$skip_line_re" "$path" >/dev/null 2>&1; then
+    report "changed file contains skipped/disabled test or validation marker: $path"
+  fi
+done < "$changed_file"
 
 # --- Test-only changes (no matching source change) ---
 has_test=0
@@ -139,7 +134,6 @@ else
   if [ -z "$files_list" ]; then
     echo "misbehavior: plan-scope skipped (no parseable ## Files)"
   else
-    allowed_file="$root/.misbehavior-allowed.$$"
     printf '%s\n' "$files_list" | sort -u > "$allowed_file"
     while IFS= read -r path; do
       [ -n "$path" ] || continue
@@ -148,7 +142,6 @@ else
         report "path outside plan ## Files: $path"
       fi
     done < "$changed_file"
-    rm -f "$allowed_file"
   fi
 fi
 
