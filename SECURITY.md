@@ -6,7 +6,7 @@ Please report vulnerabilities through a private GitHub security advisory on this
 
 ## Scope
 
-This repository is a reference implementation: cross-provider plan and code review kit for AI-assisted development. Review defaults before using it in production. Never commit credentials; secret scanning and dependency updates are enabled where noted in the CI configuration.
+This repository is a reference implementation: cross-provider plan and code review kit for AI-assisted development. Review defaults before using it in production. Never commit credentials; secret scanning and dependency updates are enabled where noted in the CI configuration. New projects also ship a documented tool-call allowlist and Claude Code deny rules for environ/env/secrets/metadata access; Cursor still relies on the agreements and the validation gate.
 
 ## Approval fatigue
 

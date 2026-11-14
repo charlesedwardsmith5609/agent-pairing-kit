@@ -110,7 +110,7 @@ done
 
 # Check and review scripts.
 mkdir -p "$path/scripts/checks"
-cp "$kit/scripts/check.sh" "$kit/scripts/plan-review.sh" "$kit/scripts/cross-review.sh" "$kit/scripts/review-call.sh" "$kit/scripts/cross-review.ps1" "$path/scripts/"
+cp "$kit/scripts/check.sh" "$kit/scripts/misbehavior-check.sh" "$kit/scripts/assertion-check.sh" "$kit/scripts/plan-review.sh" "$kit/scripts/cross-review.sh" "$kit/scripts/review-call.sh" "$kit/scripts/cross-review.ps1" "$path/scripts/"
 for i in "${!profiles[@]}"; do
   cp "$kit/profiles/${profiles[$i]}/check.sh" "$path/scripts/checks/${profiles[$i]}.sh"
   echo "${profiles[$i]} ${dirs[$i]}"
