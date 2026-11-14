@@ -19,3 +19,13 @@ Options: flag assertion-free tests by grepping the diff; scan test files on disk
 Choice: `scripts/assertion-check.sh` scans `*_test.go`, `test_*.py`, `*_test.py`, and `*.test.ts` / `*.spec.ts` files on disk. Shell tests are not scanned. The stage warns, and it fails only when `PAIRING_STRICT=1`.
 
 Why: A diff grep would miss a committed test and would pile onto the misbehavior diff scan. The request says that if a no-diff-grep decision conflicts, the check should scan test files only. There was no written decision, so the file scan is the conservative choice.
+
+## 2026-11-13: Devcontainer guidance is a document, not a template
+
+Context: The working agreements should say that tools and MCP servers cost context on every turn, and should point at a sandboxed devcontainer. The devcontainer part is docs only.
+
+Options: add a `devcontainer.json` with guessed security fields; write a short doc and name no fields that were not checked.
+
+Choice: `docs/sandboxed-devcontainer.md` states the operational rules in prose. Specific `devcontainer.json` fields are marked needs verification. `base/CLAUDE.md` points at that file. Generated projects copy `CLAUDE.md`, so the pointer names the kit path rather than a file inside the new project.
+
+Why: Inventing spec fields would present an unverified template as a boundary.

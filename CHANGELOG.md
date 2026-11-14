@@ -4,6 +4,7 @@ Format follows Keep a Changelog. Dates are UTC.
 
 ## [Unreleased] - 2026-11-02
 
+- Working agreements note that every enabled tool and MCP server costs context tokens on every turn. `docs/sandboxed-devcontainer.md` is a docs-only pointer for a sandboxed devcontainer. No devcontainer file is added.
 - Assertion scan in `scripts/check.sh` reads test files (not diffs) and warns when a test has no assertion. `PAIRING_STRICT=1` fails the gate.
 - Review checklist section "Test quality": tests must assert behavior, must not be assertion-free, and must not only mirror the implementation.
 - Tool-call policy in working agreements plus Claude Code `permissions` (ask `WebFetch`; deny environ/env/secrets/metadata probes)

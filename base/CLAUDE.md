@@ -58,6 +58,12 @@ visible so each decision can be reviewed before it lands.
 - Parameterize queries; do not concatenate untrusted input into them.
 - Never paste tokens or credentials into a tool call, forum, issue comment, or sub-agent prompt, and never run an install script fetched from a third party without asking.
 
+## Tool context cost
+
+Every enabled tool and every MCP server costs context tokens on every turn, including turns that do not call them. Enable a tool or server for the task that needs it, and disable it when that task is done.
+
+Run the agent in a sandboxed devcontainer when the work can touch the host. The pairing kit note is `docs/sandboxed-devcontainer.md`. This paragraph does not add a devcontainer file.
+
 ## Commands
 
 | Purpose                                             | Command                        |
