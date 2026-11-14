@@ -49,3 +49,13 @@ Options: copy the doc into each generated project; reword the pointer to say the
 Choice: Reword. A smoke check fails when a backticked `docs/` path is neither present in the project nor preceded by "pairing kit repository".
 
 Why: Rewording avoids copying a doc into every project and is checked by a test. Copying remains an option later.
+
+## 2026-11-14: Review scripts fail closed and send tracked changes only
+
+Context: `cross-review.sh`/`.ps1` ran `git add --intent-to-add --all`, so an untracked `.env` or key file went into the diff sent to a third-party model. A missing gitleaks only warned and sent anyway (`REQUIRE_SECRET_SCAN=1` was opt-in; the .ps1 had no opt-in). Found and fixed in toolcost (commit `33a7524`); this upstreams it. It supersedes the 2026-11-13 secret-scan behavior of "warn and send when gitleaks is missing" for the review scripts only.
+
+Options: keep warn-and-send with an opt-in refusal; refuse by default but keep sending untracked files; refuse by default, send tracked changes only, and require `--include` for untracked files.
+
+Choice: The third. A missing or failing gitleaks refuses the review (exit 1, nothing sent). The index is not touched. `--include PATH` (`-Include` in the .ps1) names an untracked file; a deny list (`.env*`, key and certificate files, `*credential*`, `.netrc`, `.npmrc`, `.pypirc`, `.aws/`, `.ssh/`, `.gnupg/`, terraform state and vars) is excluded from the diff and refused for `--include` with exit 2, as are symlinks, directories and paths outside the repo. `REQUIRE_SECRET_SCAN` no longer matters for the review scripts; `scripts/check.sh` still uses it for its staged-additions scan, which keeps warn-by-default. `tests/test-cross-review.sh` (stub loopback API, fake gitleaks) replaces toolcost's Go test and compares the .sh and .ps1 deny lists as text.
+
+Why: A secret leak cannot be undone and the cost of installing gitleaks is small. The .ps1 could not be run here (no pwsh); only the deny-list comparison covers it.

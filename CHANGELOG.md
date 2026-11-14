@@ -4,6 +4,7 @@ Format follows Keep a Changelog. Dates are UTC.
 
 ## [Unreleased] - 2026-11-02
 
+- `cross-review.sh`/`.ps1` and `review-call.sh` fail closed (upstreamed from toolcost 33a7524): a missing or failing gitleaks sends nothing; only tracked changes are sent (no more `git add --intent-to-add --all`, which leaked untracked `.env`); untracked files need `--include PATH`; a secret-file deny list is excluded from the diff and refused for `--include` (exit 2). `REQUIRE_SECRET_SCAN` no longer affects the review scripts (still used by `check.sh`). `cross-review.ps1` is unrun (no pwsh). `tests/test-cross-review.sh` covers it.
 - Assertion scan skips virtualenvs, `node_modules`, `vendor` and build directories by relative path; `PAIRING_STRICT=1` fails closed on paths it cannot read; exits 2 on a bad root or bash older than 4.4. `assertion-check.sh` and `review-call.sh` are validation gate files.
 - `misbehavior-check.sh` reads changed working-tree files (not diff text) and uses `mktemp` (DECISIONS.md, D2).
 - Assertion heuristics ignore comments and strings, accept helper asserts and `expect.assertions`, and skip `TestMain` and non-test helpers. Table tests cover the near-misses.

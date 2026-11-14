@@ -61,7 +61,7 @@ Prerequisites are checked before anything is created: Go (plus gcc for `-race` a
 | `kit-audit.sh` | What `kitaudit` runs: checks the tools and settings the kit depends on for drift |
 | `audits/` | Monthly audit reports from the scheduled research task (empty until the first one is saved) |
 | `new-project.sh` | What `newproj` calls: `bash new-project.sh PATH [profile ...]` |
-| `tests/test-*.sh` | Unit tests: `tests/test-assertion-check.sh`, `tests/test-check-summary.sh` (summary labels and `new-project.sh --backfill`), `tests/test-docs.sh`, `tests/test-misbehavior-check.sh`, `tests/test-secret-scan.sh`, `tests/test-staged-secret-scan.sh` |
+| `tests/test-*.sh` | Unit tests: `tests/test-assertion-check.sh`, `tests/test-check-summary.sh` (summary labels and `new-project.sh --backfill`), `tests/test-cross-review.sh` (cross-review fails closed, with a stub API), `tests/test-docs.sh`, `tests/test-misbehavior-check.sh`, `tests/test-secret-scan.sh`, `tests/test-staged-secret-scan.sh` |
 | `tests/smoke-new-project.sh` | Creates a project in a temp dir, asserts the files it must get, and runs its check. CI runs it for `go` and `python` |
 | `.github/workflows/ci.yml` | shellcheck on every `*.sh`, plus the smoke run |
 | `legacy-windows/` | The original Go-only PowerShell setup and check, kept for reference |
@@ -92,9 +92,9 @@ single run and skips the fallback.
 **Secret scan.** Both reviews send text to a third-party model, so before sending, the request
 (the diff, or the plan plus `REQUIREMENTS.md` and the agreements) is scanned with
 [gitleaks](https://github.com/gitleaks/gitleaks). A finding refuses the review, prints the
-redacted match, and sends nothing. If gitleaks isn't installed the review only warns and goes
-ahead unscanned, and `kitaudit` warns about it too; set `REQUIRE_SECRET_SCAN=1` to refuse reviews
-when it is missing. Install it once (for example
+redacted match, and sends nothing. The review scripts fail closed: if gitleaks is missing or
+fails, nothing is sent, and `kitaudit` warns about it. (`REQUIRE_SECRET_SCAN=1` still makes
+`scripts/check.sh` fail when its staged-additions scan can't run.) Install it once (for example
 `brew install gitleaks`, or a release binary from its GitHub page). The scan covers only the text
 the scripts build. With Cursor as the reviewer, the agent may also read other files in the
 repository, which the scan doesn't see.
@@ -140,10 +140,12 @@ The kit lives in a public GitHub repo (MIT licensed, see `LICENSE`), and
 - Needs bash 4.4+ (the assertion scan exits 2 on older bash). On macOS install a newer bash.
 - Older generated projects may lack a helper script. `bash new-project.sh --backfill PATH` copies the missing
   ones and never overwrites a file; `scripts/check.sh` warns until then.
-- `cross-review` runs `git add --intent-to-add` so new files appear in the diff. This stages no
-  content; new files just show as added in `git status`.
+- `cross-review` sends tracked changes only and does not touch the index. An untracked file is
+  sent only when named with `--include PATH` (`-Include` in the .ps1). Paths matching a deny list
+  (`.env*`, keys, `*credential*`, `.netrc`, `.aws/`, `.ssh/`, terraform state) are excluded from
+  the diff and refused for `--include` (exit 2). The `.sh` and `.ps1` deny lists must match.
 - CI (`.github/workflows/ci.yml`) runs shellcheck on every `*.sh`, `tests/test-secret-scan.sh`
-  (the secret scan with a fake gitleaks), `tests/test-misbehavior-check.sh`, the other `tests/test-*.sh` files, and a smoke run of
+  (the secret scan with a fake gitleaks), `tests/test-cross-review.sh`, `tests/test-misbehavior-check.sh`, the other `tests/test-*.sh` files, and a smoke run of
   `new-project.sh` for `go` and `python`. Run the same locally with
   `git ls-files '*.sh' | xargs shellcheck -x` and `bash tests/smoke-new-project.sh go`.
 - Every profile is tested end to end: project creation, a passing check on the empty project,

@@ -27,6 +27,8 @@ jobs:
         run: |
           bash tests/test-secret-scan.sh
           bash tests/test-staged-secret-scan.sh
+      - name: cross-review fails closed (stub API, fake gitleaks)
+        run: bash tests/test-cross-review.sh
       - name: misbehavior check heuristics
         run: bash tests/test-misbehavior-check.sh
       - name: assertion scan
