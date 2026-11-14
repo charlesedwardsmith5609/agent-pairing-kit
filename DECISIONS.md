@@ -59,3 +59,13 @@ Options: keep warn-and-send with an opt-in refusal; refuse by default but keep s
 Choice: The third. A missing or failing gitleaks refuses the review (exit 1, nothing sent). The index is not touched. `--include PATH` (`-Include` in the .ps1) names an untracked file; a deny list (`.env*`, key and certificate files, `*credential*`, `.netrc`, `.npmrc`, `.pypirc`, `.aws/`, `.ssh/`, `.gnupg/`, terraform state and vars) is excluded from the diff and refused for `--include` with exit 2, as are symlinks, directories and paths outside the repo. `REQUIRE_SECRET_SCAN` no longer matters for the review scripts; `scripts/check.sh` still uses it for its staged-additions scan, which keeps warn-by-default. `tests/test-cross-review.sh` (stub loopback API, fake gitleaks) replaces toolcost's Go test and compares the .sh and .ps1 deny lists as text.
 
 Why: A secret leak cannot be undone and the cost of installing gitleaks is small. The .ps1 could not be run here (no pwsh); only the deny-list comparison covers it.
+
+## 2026-11-14: Python assertion scan ends a test by indentation, not by any def
+
+Context: `scripts/assertion-check.sh` reset the current test at any indented `def`, so a helper defined inside a test body (`def gh(...)`) flushed the test as unasserted before its later assertions. Two real repos got false warnings.
+
+Options: keep the reset and special-case known helper names; track test-level indentation; parse Python properly.
+
+Choice: A test starts at `def test_` and ends at the next non-blank line indented the same or less. Nested defs and classes do not end it. Triple-quoted strings, comment-only lines and lines starting with a closing bracket are not dedents. An assert inside a nested helper counts toward the enclosing test, even if the helper is never called (accepted gap; the check stays a cheap heuristic). Go (`func` at column 0 only) and TS/JS (whole-file check) were already unaffected.
+
+Why: Indentation is what Python itself uses, it needs no new dependency, and it removes the false positive without hiding tests that have no assertion.

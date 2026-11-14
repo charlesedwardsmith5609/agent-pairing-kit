@@ -118,5 +118,20 @@ table_row "ts expect in comment only" a.test.ts '// expect(x).toBe(1)\nit("a", (
 table_row "ts skipped test" a.test.ts 'it.skip("a", () => { f(); });\n' flagfile
 table_row "ts real expect" a.test.ts 'it("a", () => { expect(f()).toBe(1); });\n' clean
 
+# --- Nested helpers inside a test body do not end the test ---
+table_row "py nested helper then assert after" t_test.py 'def test_a():\n    def gh(x):\n        return x\n    assert gh(1) == 1\n' clean
+table_row "py nested helper then no assert" t_test.py 'def test_a():\n    def gh(x):\n        return x\n    gh(1)\n' flag:test_a
+table_row "py asserts only before nested def" t_test.py 'def test_a():\n    assert f()\n    def gh(x):\n        return x\n    gh(1)\n' clean
+table_row "py class and def two deep then assert" t_test.py 'def test_a():\n    class Fake:\n        def run(self):\n            def inner():\n                return 1\n            return inner()\n    assert Fake().run() == 1\n' clean
+table_row "py two deep then no assert" t_test.py 'def test_a():\n    class Fake:\n        def run(self):\n            return 1\n    Fake().run()\n' flag:test_a
+table_row "py nested helper assert counts for test" t_test.py 'def test_a():\n    def check(x):\n        assert x\n    check(1)\n' clean
+table_row "py method nested helper then assert" t_test.py 'class T:\n    def test_a(self):\n        def gh():\n            return 1\n        assert gh()\n    def test_b(self):\n        helper()\n' flag:test_b
+table_row "py assert after test is not counted" t_test.py 'def test_a():\n    helper()\n\ndef util():\n    assert True\n' flag:test_a
+table_row "py multiline string at column 0 then assert" t_test.py 'def test_a():\n    s = """\nx\n"""\n    assert s\n' clean
+table_row "go func literal then t.Error after" x_test.go 'package p\nfunc TestA(t *testing.T) {\n\tf := func(x int) int {\n\t\treturn x\n\t}\n\tif f(1) != 1 {\n\t\tt.Error("bad")\n\t}\n}\n' clean
+table_row "go func literal no assertion" x_test.go 'package p\nfunc TestA(t *testing.T) {\n\tf := func(x int) int {\n\t\treturn x\n\t}\n\tf(1)\n}\n' flag:TestA
+table_row "ts nested helper arrow then expect" a.test.ts 'it("a", () => {\n  const mk = () => 1;\n  function other() { return 2; }\n  expect(mk() + other()).toBe(3);\n});\n' clean
+table_row "ts nested helper no expect" a.test.ts 'it("a", () => {\n  const mk = () => 1;\n  mk();\n});\n' flagfile
+
 printf '\n%s\n' "$fail"
 exit "$fail"
