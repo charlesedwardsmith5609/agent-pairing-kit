@@ -149,4 +149,31 @@ for pair in "deny_names:denyNames" "deny_dirs:denyDirs"; do
   if [ -n "$a" ] && [ "$a" = "$b" ]; then ok "${pair%%:*} matches ${pair#*:} in .ps1"; else bad "${pair%%:*} differs from ${pair#*:} in .ps1"; fi
 done
 
+# cross-review.ps1 under real PowerShell, when pwsh is installed: it must parse, refuse a
+# deny-listed -Include with exit 2, and send nothing when gitleaks is missing.
+if command -v pwsh >/dev/null 2>&1; then
+  export DOTNET_SYSTEM_GLOBALIZATION_INVARIANT=1
+  ps="$work/ps"; mkdir -p "$ps/scripts" "$ps/skills"
+  cp "$kit/scripts/cross-review.ps1" "$ps/scripts/"; cp "$kit/base/review-checklist.md" "$ps/skills/"
+  ( cd "$ps" && git init -q && git config user.email t@example.com && git config user.name t \
+    && echo one > app.txt && git add -A && git commit -qm init && echo two >> app.txt && echo X=1 > .env )
+  cat > "$work/parse.ps1" <<'PS'
+param([string]$Path)
+$e = $null; $t = $null
+[void][System.Management.Automation.Language.Parser]::ParseFile($Path, [ref]$t, [ref]$e)
+$e.Count
+PS
+  perr=$(pwsh -NoProfile -File "$work/parse.ps1" "$kit/scripts/cross-review.ps1" 2>&1 | tail -1)
+  if [ "$perr" = 0 ]; then ok "cross-review.ps1 parses under pwsh"; else bad "cross-review.ps1 has parse errors under pwsh ($perr)"; fi
+  pnogl="$work/pwsh-path"; mkdir -p "$pnogl"
+  run_ps() { ( cd "$ps" && env -i HOME="$work/home" PATH="/usr/bin:/bin:$(dirname "$(command -v pwsh)")" DOTNET_SYSTEM_GLOBALIZATION_INVARIANT=1 \
+    OPENAI_API_KEY=dummy OPENAI_BASE_URL=http://127.0.0.1:9 pwsh -NoProfile -File scripts/cross-review.ps1 "$@" 2>&1 ); }
+  out=$(run_ps -Include .env); rc=$?
+  check "ps1 -Include .env exits 2" 2 "$rc"
+  out=$(run_ps); rc=$?
+  if [ "$rc" -ne 0 ] && printf '%s' "$out" | grep -q 'gitleaks is not installed'; then ok "ps1 without gitleaks sends nothing"; else bad "ps1 without gitleaks did not refuse (rc=$rc)"; fi
+else
+  echo "skip: pwsh not installed; cross-review.ps1 was only compared as text"
+fi
+
 exit "$fail"
