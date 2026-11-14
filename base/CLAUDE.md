@@ -25,7 +25,7 @@ visible so each decision can be reviewed before it lands.
    allowed. To propose anything else, name it and say what it replaces and why.
 4. **Done means the check passes.** After every change, run `bash scripts/check.sh` and report
    the result per stage. A clean compile is not done. Never claim something builds or passes
-   without running it. Set `PAIRING_STRICT=1` to turn agent-misbehavior warnings into failures.
+   without running it. Set `PAIRING_STRICT=1` to turn the check's warnings (agent misbehavior, tests with no assertion, staged secrets) into failures.
 5. **Test-first.** Before writing code for a step, agree a natural-language test list with the
    human. Write those tests so they fail, then implement until they pass. The test list in
    `plans/step-N.md` is that agreed list. Exception: when the human says "scaffold", write
@@ -74,6 +74,8 @@ Run the agent in a sandboxed devcontainer when the work can touch the host. The 
 
 Both reviews send work to a different AI provider: the plan review checks a plan against
 `REQUIREMENTS.md` before any code exists, and the cross-model review checks the code diff. A
-review can take a few minutes, so run them with a 10-minute timeout. When
+review can take a few minutes, so run them with a 10-minute timeout. Both fail closed: if the
+secret scan finds something, or gitleaks is missing or fails, nothing is sent. The cross-model
+review sends tracked changes only; name an untracked file with `--include PATH`. When
 findings come back, give your assessment of each one (agree or disagree, with a reason) and do not
 change the plan or the code until the human decides.

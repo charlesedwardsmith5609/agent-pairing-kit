@@ -26,7 +26,7 @@ Then in Cursor's terminal: `claude`, `/ide`, `/mcp` (leave only the IDE server o
 | `python` | `.venv` with pytest, ruff, mypy; stdlib-only app code | ruff check, ruff format, mypy, pytest | `python-service.md` |
 | `web` | npm dev deps: typescript, vite, vitest, jsdom, prettier | prettier, unsafe DOM sinks, tsc, vitest | `web-frontend.md` |
 | `fullstack` | backend in `api/` + web in `web/`; Vite proxies `/api` to `localhost:8080` | both, summarized per language | both |
-| `expo` | Expo app with Expo Router, zustand, AsyncStorage, expo-audio, expo-speech; dev deps vitest, prettier | prettier, hard-coded UI text, tsc, content validator (if present), vitest | `expo-mobile.md` |
+| `expo` | Expo app with Expo Router, zustand, AsyncStorage, expo-audio, expo-speech and a few more Expo packages; dev deps vitest, prettier | prettier, hard-coded UI text, tsc, content validator (if present), vitest | `expo-mobile.md` |
 
 Prerequisites are checked before anything is created: Go (plus gcc for `-race` and
 `govulncheck`, installed with `go install golang.org/x/vuln/cmd/govulncheck@latest`), python3 with
@@ -36,16 +36,18 @@ Prerequisites are checked before anything is created: Go (plus gcc for `-race` a
 
 | Path | Purpose |
 |---|---|
-| `CLAUDE.md` / `AGENTS.md` | Base working agreements plus one section per language in the project |
+| `CLAUDE.md` / `AGENTS.md` | Base working agreements plus one section per language in the project (identical copies) |
 | `.cursor/rules/pairing-mode.mdc` | Makes Cursor apply the same agreements |
-| `skills/*.md` | The skill for each language, plus `review-checklist.md` combining base and language-specific review focus |
-| `scripts/check.sh` | Runs agent-misbehavior heuristics, then every language's checks (from `scripts/checks/`) per `.pairing-profiles`, with a summary. Set `PAIRING_STRICT=1` to fail on misbehavior warnings |
-| `scripts/misbehavior-check.sh` | Deterministic working-tree file checks (changed, untracked and staged files): skipped tests, gate-file edits, test-only changes, and (when the plan has `## Files`) paths outside the approved step |
-| `scripts/assertion-check.sh` | Scans test files on disk (skipping virtualenvs, `node_modules`, `vendor` and build directories) and warns on tests with no assertion. `PAIRING_STRICT=1` fails, including on paths it could not scan. Needs bash 4.4+ |
+| `skills/*.md` | The skill for each language, plus `review-checklist.md` (code review) and `plan-review-checklist.md` (plan review), each combining base and language-specific review focus |
+| `scripts/check.sh` | The validation gate. Stages, in order: a secret scan of staged additions (shown in the summary only when it fails), `misbehavior`, `assertions`, then each language in `.pairing-profiles` (its script is `scripts/checks/<profile>.sh`). The summary labels each stage PASS, WARN or FAIL; exit 0 if nothing failed, 1 otherwise, 2 if `.pairing-profiles` is missing. `PAIRING_STRICT=1` turns warnings from the secret scan, `misbehavior` and `assertions` (and a missing helper script) into failures. `REQUIRE_SECRET_SCAN=1` makes the gate fail when the staged-additions scan cannot run (no gitleaks, or the scanner or `git diff` failed) |
+| `scripts/misbehavior-check.sh` | Deterministic checks over changed working-tree files (modified, untracked and staged), not diff text: skipped tests, edits to validation gate files, test-only changes, and (when the latest `plans/step-*.md` has a `## Files` list) paths outside the approved step. Warns; `PAIRING_STRICT=1` fails |
+| `scripts/assertion-check.sh` | Scans test files on disk (skipping `.git`, virtualenvs, `node_modules`, `vendor` and build directories) and warns on tests with no assertion. `PAIRING_STRICT=1` fails, including on paths it could not scan. Exits 2 on an unusable root or bash older than 4.4 |
 | `scripts/review-call.sh` | Shared by both reviews: sends the request to Cursor, OpenAI or Anthropic |
-| `scripts/plan-review.sh` | Sends a plan in `plans/step-N.md`, plus `REQUIREMENTS.md` and the agreements, to a second AI provider before any code exists |
-| `scripts/cross-review.sh` / `.ps1` | Sends the current diff (minus lockfiles) to a second AI provider; saves to `.reviews/` |
+| `scripts/plan-review.sh` | Sends a plan in `plans/step-N.md`, plus `REQUIREMENTS.md`, the agreements and earlier plans, to a second AI provider before any code exists |
+| `scripts/cross-review.sh` / `.ps1` | Sends the tracked diff (minus `go.sum`, `package-lock.json` and deny-listed files) to a second AI provider; saves to `.reviews/`. The `.ps1` supports only the openai and anthropic providers |
 | `.claude/commands/` | `/check`, `/plan-review` and `/cross-review` |
+| `.pairing-profiles` | One `profile dir` line per language; `scripts/check.sh` reads it |
+| `.gitignore`, `.gitattributes` | Ignore rules for the profiles in the project (including `.reviews/` and `.claude/settings.local.json`), and line-ending rules |
 | `.claude/settings.json` | Turns off claude.ai connectors and artifacts; asks before `WebFetch`; denies reads of `.env`, `/proc/**/environ`, k8s secrets, and cloud-metadata curl/wget |
 | `.claude/settings.local.json` | Per-machine, gitignored: switches off every plugin installed on your account (and their MCP servers) for this project only |
 | `.pairing-setup.log` | Tool output from setup (gitignored) |
@@ -58,15 +60,15 @@ Prerequisites are checked before anything is created: Go (plus gcc for `-race` a
 | `profiles/<lang>/` | `agreements.md`, `review.md`, `check.sh`, `init.sh`, `gitignore`, `skills/` |
 | `scripts/` | Check runner and cross-review scripts copied into every project |
 | `shell/functions.sh` | `newproj`, `setreviewer`, `setkey`, `keystatus`, `kitaudit`, `kitsync`. Source it from `~/.bashrc` |
-| `kit-audit.sh` | What `kitaudit` runs: checks the tools and settings the kit depends on for drift |
+| `kit-audit.sh` | What `kitaudit` runs: checks the tools and settings the kit depends on for drift. It is not copied into projects |
 | `audits/` | Monthly audit reports from the scheduled research task (empty until the first one is saved) |
 | `new-project.sh` | What `newproj` calls: `bash new-project.sh PATH [profile ...]` |
-| `tests/test-*.sh` | Unit tests: `tests/test-assertion-check.sh`, `tests/test-check-summary.sh` (summary labels and `new-project.sh --backfill`), `tests/test-cross-review.sh` (cross-review fails closed, with a stub API), `tests/test-docs.sh`, `tests/test-misbehavior-check.sh`, `tests/test-secret-scan.sh`, `tests/test-staged-secret-scan.sh` |
-| `tests/smoke-new-project.sh` | Creates a project in a temp dir, asserts the files it must get, and runs its check. CI runs it for `go` and `python` |
-| `.github/workflows/ci.yml` | shellcheck on every `*.sh`, plus the smoke run |
+| `tests/test-*.sh` | Unit tests: `tests/test-assertion-check.sh`, `tests/test-check-summary.sh` (summary labels and `new-project.sh --backfill`), `tests/test-cross-review.sh` (cross-review fails closed, with a stub API and fake gitleaks; also parses and runs the refusal paths of the `.ps1` under `pwsh` when it is installed), `tests/test-docs.sh`, `tests/test-misbehavior-check.sh`, `tests/test-secret-scan.sh`, `tests/test-staged-secret-scan.sh` |
+| `tests/smoke-new-project.sh` | Creates a project in a temp dir, asserts the files it must get, runs its check, and checks that `--backfill` changes nothing. CI runs it for `go`, `python`, `web` and `fullstack` (not `expo`) |
+| `.github/workflows/ci.yml` | Three jobs: shellcheck on every tracked `*.sh`, the unit tests above (every `tests/test-*.sh`), and the smoke run. Dependabot updates the GitHub Actions versions |
 | `legacy-windows/` | The original Go-only PowerShell setup and check, kept for reference |
 
-To add a language, create `profiles/<lang>/` with the same six pieces and add it to the profile
+To add a language, create `profiles/<lang>/` with the same pieces (`agreements.md`, `review.md`, `check.sh`, `init.sh`, `gitignore`, `skills/`) and add it to the profile
 list in `new-project.sh`.
 
 ## Reviewers and keys
@@ -90,11 +92,12 @@ back to your OpenAI key when one is saved. `--provider` on either review script 
 single run and skips the fallback.
 
 **Secret scan.** Both reviews send text to a third-party model, so before sending, the request
-(the diff, or the plan plus `REQUIREMENTS.md` and the agreements) is scanned with
+(the diff, or the plan plus `REQUIREMENTS.md`, the agreements and earlier plans) is scanned with
 [gitleaks](https://github.com/gitleaks/gitleaks). A finding refuses the review, prints the
 redacted match, and sends nothing. The review scripts fail closed: if gitleaks is missing or
-fails, nothing is sent, and `kitaudit` warns about it. (`REQUIRE_SECRET_SCAN=1` still makes
-`scripts/check.sh` fail when its staged-additions scan can't run.) Install it once (for example
+fails, nothing is sent, and `kitaudit` warns about it. `REQUIRE_SECRET_SCAN` no longer affects the
+review scripts; it only makes `scripts/check.sh` fail when its staged-additions scan can't run.
+Install it once (for example
 `brew install gitleaks`, or a release binary from its GitHub page). The scan covers only the text
 the scripts build. With Cursor as the reviewer, the agent may also read other files in the
 repository, which the scan doesn't see.
@@ -137,17 +140,37 @@ The kit lives in a public GitHub repo (MIT licensed, see `LICENSE`), and
 
 ## Notes
 
-- Needs bash 4.4+ (the assertion scan exits 2 on older bash). On macOS install a newer bash.
-- Older generated projects may lack a helper script. `bash new-project.sh --backfill PATH` copies the missing
-  ones and never overwrites a file; `scripts/check.sh` warns until then.
+- Needs bash 4.4+ (the assertion scan exits 2 on older bash, which fails `scripts/check.sh`; this applies to generated projects too). On macOS install a newer bash.
+- **Refreshing helpers in an existing project.** `bash <kit>/new-project.sh --backfill PATH` copies
+  only the helper scripts the project lacks (`check.sh`, `misbehavior-check.sh`,
+  `assertion-check.sh`, `plan-review.sh`, `cross-review.sh`, `review-call.sh`, `cross-review.ps1`)
+  and never overwrites a file; it exits 2 if PATH has no `.pairing-profiles`. `scripts/check.sh`
+  warns about a missing helper until then. It does not update helpers that already exist. To pick
+  up a newer version of one, copy it over from the kit yourself (for example
+  `cp <kit>/scripts/review-call.sh PATH/scripts/`), then review the diff. The check scripts in
+  `scripts/checks/`, `skills/`, `CLAUDE.md` and `.claude/` are not refreshed by either route.
+  Copying over a validation gate file shows up in the project's `misbehavior` stage as an edit.
+- Validation gate files (editing one is reported by `misbehavior-check.sh`): `scripts/check.sh`,
+  `scripts/misbehavior-check.sh`, `scripts/assertion-check.sh`, `scripts/review-call.sh`,
+  `.pairing-profiles`, `scripts/checks/*` and `.github/workflows/*`.
 - `cross-review` sends tracked changes only and does not touch the index. An untracked file is
-  sent only when named with `--include PATH` (`-Include` in the .ps1). Paths matching a deny list
-  (`.env*`, keys, `*credential*`, `.netrc`, `.aws/`, `.ssh/`, terraform state) are excluded from
-  the diff and refused for `--include` (exit 2). The `.sh` and `.ps1` deny lists must match.
-- CI (`.github/workflows/ci.yml`) runs shellcheck on every `*.sh`, `tests/test-secret-scan.sh`
-  (the secret scan with a fake gitleaks), `tests/test-cross-review.sh`, `tests/test-misbehavior-check.sh`, the other `tests/test-*.sh` files, and a smoke run of
-  `new-project.sh` for `go` and `python`. Run the same locally with
+  sent only when named with `--include PATH` (`-Include` in the .ps1). These paths are excluded
+  from the diff and refused for `--include` (exit 2): `.env*`; `*.pem`, `*.key`, `*.p12`, `*.pfx`,
+  `*.jks`, `*.keystore`, `*.kdbx`; `id_rsa*`, `id_dsa*`, `id_ecdsa*`, `id_ed25519*`; `*credential*`;
+  `.netrc`, `.npmrc`, `.pypirc`, `.git-credentials`; `*.tfstate`, `*.tfvars`; and anything under
+  `.aws/`, `.ssh/` or `.gnupg/`. `--include` also refuses symlinks, directories and paths outside
+  the repository. The `.sh` and `.ps1` deny lists must match (a test compares them). 
+  `plan-review.sh` uses the same fail-closed scan through `review-call.sh`. A refused review
+  (finding, no gitleaks, scanner failure) exits 1 and sends nothing.
+- `cross-review.ps1` is exercised only for parsing and its two refusal paths (`-Include .env`
+  and no gitleaks), under `pwsh` when it is installed; no other `.ps1` behavior is tested.
+- CI (`.github/workflows/ci.yml`) has three jobs: shellcheck on every tracked `*.sh`; the unit
+  tests (`tests/test-secret-scan.sh`, `tests/test-staged-secret-scan.sh`,
+  `tests/test-cross-review.sh`, `tests/test-misbehavior-check.sh`, `tests/test-assertion-check.sh`,
+  `tests/test-check-summary.sh`, `tests/test-docs.sh`); and a smoke run of `new-project.sh` for
+  `go`, `python`, `web` and `fullstack`. Run the same locally with
   `git ls-files '*.sh' | xargs shellcheck -x` and `bash tests/smoke-new-project.sh go`.
-- Every profile is tested end to end: project creation, a passing check on the empty project,
-  and seeded failures caught (Go race, mypy and pytest errors, TypeScript error, formatting,
-  `innerHTML`).
+- `expo` is not in the CI smoke matrix; run `bash tests/smoke-new-project.sh expo` yourself
+  (needs Node 20+ and network). Which seeded failures each profile's check catches (Go race,
+  mypy and pytest errors, TypeScript error, formatting, `innerHTML`) was not re-verified for this
+  documentation pass.

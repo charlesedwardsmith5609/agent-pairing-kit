@@ -26,4 +26,11 @@ confirmation before step 1 starts.
 - R8. Tests, README and CHANGELOG match the shipped behaviour; no generated file points at a
   path that does not exist in a generated project. Bash 4.4+ is documented (finding 8).
 - No new dependencies. Shell and standard tools only. One local commit per plan step; never push.
+- R9. The review scripts (`plan-review.sh`, `cross-review.sh`, `cross-review.ps1`) fail closed:
+  a missing gitleaks, a scanner failure or a finding sends nothing. `cross-review` sends tracked
+  changes only, takes untracked files by `--include PATH` / `-Include`, and excludes and refuses a
+  secret-file deny list. `REQUIRE_SECRET_SCAN` affects only `scripts/check.sh` (DECISIONS.md,
+  2026-11-14).
+- R10. The Python assertion scan ends a test by indentation, so asserts in or after a nested
+  helper count for the enclosing test (DECISIONS.md, 2026-11-14).
 - Out of scope: items listed as Suggestions, copying the devcontainer doc into generated projects.

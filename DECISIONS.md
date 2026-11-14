@@ -16,7 +16,7 @@ Context: The catch-up asks for a warn-only check that flags tests with no assert
 
 Options: flag assertion-free tests by grepping the diff; scan test files on disk.
 
-Choice: `scripts/assertion-check.sh` scans `*_test.go`, `test_*.py`, `*_test.py`, and `*.test.ts` / `*.spec.ts` files on disk. Shell tests are not scanned. The stage warns, and it fails only when `PAIRING_STRICT=1`.
+Choice: `scripts/assertion-check.sh` scans `*_test.go`, `test_*.py`, `*_test.py`, and `*.test.ts` / `*.spec.ts` (and `.tsx`) files on disk. Shell tests are not scanned. The stage warns, and it fails only when `PAIRING_STRICT=1`.
 
 Why: A diff grep would miss a committed test and would pile onto the misbehavior diff scan. The request says that if a no-diff-grep decision conflicts, the check should scan test files only. There was no written decision, so the file scan is the conservative choice.
 
@@ -58,7 +58,7 @@ Options: keep warn-and-send with an opt-in refusal; refuse by default but keep s
 
 Choice: The third. A missing or failing gitleaks refuses the review (exit 1, nothing sent). The index is not touched. `--include PATH` (`-Include` in the .ps1) names an untracked file; a deny list (`.env*`, key and certificate files, `*credential*`, `.netrc`, `.npmrc`, `.pypirc`, `.aws/`, `.ssh/`, `.gnupg/`, terraform state and vars) is excluded from the diff and refused for `--include` with exit 2, as are symlinks, directories and paths outside the repo. `REQUIRE_SECRET_SCAN` no longer matters for the review scripts; `scripts/check.sh` still uses it for its staged-additions scan, which keeps warn-by-default. `tests/test-cross-review.sh` (stub loopback API, fake gitleaks) replaces toolcost's Go test and compares the .sh and .ps1 deny lists as text.
 
-Why: A secret leak cannot be undone and the cost of installing gitleaks is small. The .ps1 could not be run here (no pwsh); only the deny-list comparison covers it.
+Why: A secret leak cannot be undone and the cost of installing gitleaks is small. The .ps1 was first checked only by the deny-list text comparison; running it under pwsh then showed it did not parse (a `$f:` scope error in a refusal message), which was fixed. `tests/test-cross-review.sh` now parses it and runs the `-Include .env` and no-gitleaks refusals under pwsh when pwsh is installed (skipped otherwise). Nothing else in the .ps1 is exercised.
 
 ## 2026-11-14: Python assertion scan ends a test by indentation, not by any def
 
