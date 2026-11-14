@@ -40,7 +40,8 @@ Prerequisites are checked before anything is created: Go (plus gcc for `-race` a
 | `.cursor/rules/pairing-mode.mdc` | Makes Cursor apply the same agreements |
 | `skills/*.md` | The skill for each language, plus `review-checklist.md` combining base and language-specific review focus |
 | `scripts/check.sh` | Runs agent-misbehavior heuristics, then every language's checks (from `scripts/checks/`) per `.pairing-profiles`, with a summary. Set `PAIRING_STRICT=1` to fail on misbehavior warnings |
-| `scripts/misbehavior-check.sh` | Deterministic diff checks: skipped tests, gate-file edits, test-only changes, and (when the plan has `## Files`) paths outside the approved step |
+| `scripts/misbehavior-check.sh` | Deterministic working-tree file checks (changed, untracked and staged files): skipped tests, gate-file edits, test-only changes, and (when the plan has `## Files`) paths outside the approved step |
+| `scripts/assertion-check.sh` | Scans test files on disk (skipping virtualenvs, `node_modules`, `vendor` and build directories) and warns on tests with no assertion. `PAIRING_STRICT=1` fails, including on paths it could not scan. Needs bash 4.4+ |
 | `scripts/review-call.sh` | Shared by both reviews: sends the request to Cursor, OpenAI or Anthropic |
 | `scripts/plan-review.sh` | Sends a plan in `plans/step-N.md`, plus `REQUIREMENTS.md` and the agreements, to a second AI provider before any code exists |
 | `scripts/cross-review.sh` / `.ps1` | Sends the current diff (minus lockfiles) to a second AI provider; saves to `.reviews/` |
@@ -60,6 +61,7 @@ Prerequisites are checked before anything is created: Go (plus gcc for `-race` a
 | `kit-audit.sh` | What `kitaudit` runs: checks the tools and settings the kit depends on for drift |
 | `audits/` | Monthly audit reports from the scheduled research task (empty until the first one is saved) |
 | `new-project.sh` | What `newproj` calls: `bash new-project.sh PATH [profile ...]` |
+| `tests/test-*.sh` | Unit tests: `tests/test-assertion-check.sh`, `tests/test-check-summary.sh` (summary labels and `new-project.sh --backfill`), `tests/test-docs.sh`, `tests/test-misbehavior-check.sh`, `tests/test-secret-scan.sh`, `tests/test-staged-secret-scan.sh` |
 | `tests/smoke-new-project.sh` | Creates a project in a temp dir, asserts the files it must get, and runs its check. CI runs it for `go` and `python` |
 | `.github/workflows/ci.yml` | shellcheck on every `*.sh`, plus the smoke run |
 | `legacy-windows/` | The original Go-only PowerShell setup and check, kept for reference |
@@ -135,10 +137,13 @@ The kit lives in a public GitHub repo (MIT licensed, see `LICENSE`), and
 
 ## Notes
 
+- Needs bash 4.4+ (the assertion scan exits 2 on older bash). On macOS install a newer bash.
+- Older generated projects may lack a helper script. `bash new-project.sh --backfill PATH` copies the missing
+  ones and never overwrites a file; `scripts/check.sh` warns until then.
 - `cross-review` runs `git add --intent-to-add` so new files appear in the diff. This stages no
   content; new files just show as added in `git status`.
 - CI (`.github/workflows/ci.yml`) runs shellcheck on every `*.sh`, `tests/test-secret-scan.sh`
-  (the secret scan with a fake gitleaks), `tests/test-misbehavior-check.sh`, and a smoke run of
+  (the secret scan with a fake gitleaks), `tests/test-misbehavior-check.sh`, the other `tests/test-*.sh` files, and a smoke run of
   `new-project.sh` for `go` and `python`. Run the same locally with
   `git ls-files '*.sh' | xargs shellcheck -x` and `bash tests/smoke-new-project.sh go`.
 - Every profile is tested end to end: project creation, a passing check on the empty project,

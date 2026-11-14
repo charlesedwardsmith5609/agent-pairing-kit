@@ -4,6 +4,11 @@ Format follows Keep a Changelog. Dates are UTC.
 
 ## [Unreleased] - 2026-11-02
 
+- Assertion scan skips virtualenvs, `node_modules`, `vendor` and build directories by relative path; `PAIRING_STRICT=1` fails closed on paths it cannot read; exits 2 on a bad root or bash older than 4.4. `assertion-check.sh` and `review-call.sh` are validation gate files.
+- `misbehavior-check.sh` reads changed working-tree files (not diff text) and uses `mktemp` (DECISIONS.md, D2).
+- Assertion heuristics ignore comments and strings, accept helper asserts and `expect.assertions`, and skip `TestMain` and non-test helpers. Table tests cover the near-misses.
+- `scripts/check.sh` summary shows `WARN` for a stage that warned; a missing helper script is a named warning (failure under `PAIRING_STRICT=1`). `new-project.sh --backfill PATH` adds missing helpers without overwriting.
+- Docs: README lists `assertion-check.sh` and the bash 4.4 requirement; the devcontainer pointer in generated agreements names the kit repository; `tests/test-docs.sh` guards README and CONTRIBUTING drift.
 - `new-project.sh` copies `scripts/assertion-check.sh` so a generated project's check can run the assertion scan.
 - Working agreements note that every enabled tool and MCP server costs context tokens on every turn. `docs/sandboxed-devcontainer.md` is a docs-only pointer for a sandboxed devcontainer. No devcontainer file is added.
 - Assertion scan in `scripts/check.sh` reads test files (not diffs) and warns when a test has no assertion. `PAIRING_STRICT=1` fails the gate.

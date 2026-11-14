@@ -62,7 +62,7 @@ visible so each decision can be reviewed before it lands.
 
 Every enabled tool and every MCP server costs context tokens on every turn, including turns that do not call them. Enable a tool or server for the task that needs it, and disable it when that task is done.
 
-Run the agent in a sandboxed devcontainer when the work can touch the host. The pairing kit note is `docs/sandboxed-devcontainer.md`. This paragraph does not add a devcontainer file.
+Run the agent in a sandboxed devcontainer when the work can touch the host. The pairing kit repository has a note on this, `docs/sandboxed-devcontainer.md`; that file lives in the kit, not in this project. This paragraph does not add a devcontainer file.
 
 ## Commands
 

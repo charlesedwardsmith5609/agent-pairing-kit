@@ -39,3 +39,13 @@ Options: keep the diff grep; read the content of changed files.
 Choice: The changed set is `git ls-files -m -o --exclude-standard` plus `git diff --cached --name-only`. Paths that no longer exist are skipped for content checks. The skip-marker scan reads the content of changed test files and `*.json` / `*.config.*` files. A marker already present in a changed file is reported (restrictive reading). Temp files come from `mktemp`. `scripts/assertion-check.sh` and `scripts/review-call.sh` are validation gate files. Deleted gate files are still reported.
 
 Why: Content of the files as they are on disk is what the tests run. Edits committed and unchanged in the working tree are not seen; that is accepted.
+
+## 2026-11-14: Devcontainer pointer names the kit repository
+
+Context: Generated projects copy `CLAUDE.md`, which pointed at `docs/sandboxed-devcontainer.md`, a file that does not exist in the generated project. This supersedes only the pointer wording in the 2026-11-13 devcontainer entry; the docs-only choice there is unchanged.
+
+Options: copy the doc into each generated project; reword the pointer to say the file is in the pairing kit repository.
+
+Choice: Reword. A smoke check fails when a backticked `docs/` path is neither present in the project nor preceded by "pairing kit repository".
+
+Why: Rewording avoids copying a doc into every project and is checked by a test. Copying remains an option later.

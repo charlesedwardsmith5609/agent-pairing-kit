@@ -33,6 +33,8 @@ jobs:
         run: bash tests/test-assertion-check.sh
       - name: check summary and backfill
         run: bash tests/test-check-summary.sh
+      - name: docs drift
+        run: bash tests/test-docs.sh
 
   smoke:
     runs-on: ubuntu-latest
