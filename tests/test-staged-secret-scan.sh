@@ -22,7 +22,7 @@ init_repo() {
   repo="$work/repo"
   rm -rf "$repo"
   mkdir -p "$repo/scripts/checks"
-  cp "$kit/scripts/check.sh" "$kit/scripts/review-call.sh" "$kit/scripts/misbehavior-check.sh" "$repo/scripts/"
+  cp "$kit/scripts/check.sh" "$kit/scripts/review-call.sh" "$kit/scripts/misbehavior-check.sh" "$kit/scripts/assertion-check.sh" "$repo/scripts/"
   printf '#!/bin/sh\necho stub-ok\n' > "$repo/scripts/checks/stub.sh"
   chmod +x "$repo/scripts/checks/stub.sh"
   printf 'stub .\n' > "$repo/.pairing-profiles"

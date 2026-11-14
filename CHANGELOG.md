@@ -4,6 +4,7 @@ Format follows Keep a Changelog. Dates are UTC.
 
 ## [Unreleased] - 2026-11-02
 
+- Assertion scan in `scripts/check.sh` reads test files (not diffs) and warns when a test has no assertion. `PAIRING_STRICT=1` fails the gate.
 - Review checklist section "Test quality": tests must assert behavior, must not be assertion-free, and must not only mirror the implementation.
 - Tool-call policy in working agreements plus Claude Code `permissions` (ask `WebFetch`; deny environ/env/secrets/metadata probes)
 - Agent-misbehavior stage in `scripts/check.sh` (warn by default; `PAIRING_STRICT=1` fails): skipped tests, gate-file edits, test-only diffs, plan `## Files` scope when parseable

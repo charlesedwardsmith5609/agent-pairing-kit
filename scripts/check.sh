@@ -96,6 +96,14 @@ else
   fail=1
 fi
 
+printf '\n######## assertions\n'
+if bash "$root/scripts/assertion-check.sh" "$root"; then
+  results="$results\n  assertions: PASS"
+else
+  results="$results\n  assertions: FAIL"
+  fail=1
+fi
+
 while read -r profile dir <&3; do
   [ -n "${profile:-}" ] || continue
   printf '\n######## %s (%s)\n' "$profile" "$dir"
