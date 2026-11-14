@@ -31,6 +31,8 @@ jobs:
         run: bash tests/test-misbehavior-check.sh
       - name: assertion scan
         run: bash tests/test-assertion-check.sh
+      - name: check summary and backfill
+        run: bash tests/test-check-summary.sh
 
   smoke:
     runs-on: ubuntu-latest

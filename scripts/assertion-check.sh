@@ -69,12 +69,18 @@ scan_go() {
       flush()
       name = $2
       sub(/\(.*/, "", name)
-      if (name == "TestMain") name = ""
+      # Only a func taking *testing.T is a test; TestMain and Test-prefixed helpers are not.
+      if (name == "TestMain" || $0 !~ /\*testing\.T/) name = ""
       asserted = 0
       next
     }
     /^func / { flush(); name = "" }
-    name != "" && /t\.(Error|Fatal|Fail)|assert\.|require\.|cmp\.(Diff|Equal)/ { asserted = 1 }
+    {
+      line = $0
+      gsub(/"([^"\\]|\\.)*"/, "\"\"", line)
+      sub(/\/\/.*/, "", line)
+    }
+    name != "" && line ~ /t\.(Error|Fatal|Fail)|assert\.|require\.|cmp\.(Diff|Equal)|[Aa]ssert[A-Za-z]*\(/ { asserted = 1 }
     END { flush() }
   ' "$file")
   local name
@@ -99,7 +105,13 @@ scan_py() {
       next
     }
     /^[[:space:]]*def / { flush(); name = "" }
-    name != "" && /assert |assert\(|pytest\.raises|pytest\.fail|self\.assert/ { asserted = 1 }
+    {
+      line = $0
+      gsub(/"([^"\\]|\\.)*"/, "\"\"", line)
+      gsub(/\047([^\047\\]|\\.)*\047/, "\047\047", line)
+      sub(/#.*/, "", line)
+    }
+    name != "" && line ~ /assert |assert\(|pytest\.raises|pytest\.fail|self\.assert/ { asserted = 1 }
     END { flush() }
   ' "$file")
   local name
@@ -111,7 +123,8 @@ scan_py() {
 
 scan_js() {
   local file="$1"
-  if ! grep -Eq 'expect\(|assert[[:space:]]*\(|assert\.' "$file"; then
+  # Comment text does not count as an assertion.
+  if ! sed -E 's://.*$::' "$file" | grep -Eq 'expect\(|expect\.(assertions|hasAssertions)|assert[[:space:]]*\(|assert\.'; then
     report "${file#./}: no expect or assert call"
   fi
 }

@@ -55,4 +55,7 @@ git log -1 --format=%s | grep -q 'agent pairing kit' || fail "unexpected initial
 
 echo "smoke: running the project's own check on the empty project"
 bash scripts/check.sh || fail "scripts/check.sh failed on the empty project"
+echo "smoke: --backfill on a complete project changes nothing"
+bash "$kit/new-project.sh" --backfill "$target" || fail "--backfill failed"
+[ -z "$(git status --porcelain)" ] || fail "--backfill changed a complete project"
 echo "smoke: OK ($*)"

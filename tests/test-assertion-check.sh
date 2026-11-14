@@ -88,5 +88,35 @@ chmod 755 "$work/ex/locked"
 scan_dir "$work/does-not-exist"; check "missing root rc" 2 $?
 printf x > "$work/afile"; scan_dir "$work/afile"; check "file root rc" 2 $?
 
+# --- Table of near-miss inputs (step 2) ---
+# Row: name | filename | source (printf escapes) | expect ("flag:<name>" or "clean")
+table_row() {
+  local name="$1" file="$2" src="$3" expect="$4"
+  rm -rf "$work/tb"; mkdir -p "$work/tb"
+  printf '%b' "$src" > "$work/tb/$file"
+  scan_dir "$work/tb"
+  case "$expect" in
+    clean) check_out "table: $name" "assertions: OK" "$work/out" ;;
+    flag:*) check_out "table: $name" "${expect#flag:} has no assertion" "$work/out" ;;
+    flagfile) check_out "table: $name" "$file: no expect or assert call" "$work/out" ;;
+  esac
+}
+table_row "py assert only in comment" t_test.py 'def test_a():\n    # assert x == 1\n    helper()\n' flag:test_a
+table_row "py assert only in string" t_test.py 'def test_a():\n    msg = "assert x == 1"\n    helper()\n' flag:test_a
+table_row "py assertEqual helper" t_test.py 'class T:\n    def test_a(self):\n        self.assertEqual(1, 1)\n' clean
+table_row "py pytest.raises context" t_test.py 'def test_a():\n    with pytest.raises(ValueError):\n        f()\n' clean
+table_row "py skipped test" t_test.py '@pytest.mark.skip\ndef test_a():\n    helper()\n' flag:test_a
+table_row "py non-test helper" t_test.py 'def helper():\n    return 1\n' clean
+table_row "go assertion only in comment" x_test.go 'package p\nfunc TestA(t *testing.T) {\n\t// t.Fatal("x")\n\tF()\n}\n' flag:TestA
+table_row "go t.Run closure asserts" x_test.go 'package p\nfunc TestA(t *testing.T) {\n\tt.Run("s", func(t *testing.T) {\n\t\tt.Fatal("x")\n\t})\n}\n' clean
+table_row "go assertEqual helper" x_test.go 'package p\nfunc TestA(t *testing.T) {\n\tassertEqual(t, 1, 1)\n}\n' clean
+table_row "go TestMain ignored" x_test.go 'package p\nfunc TestMain(m *testing.M) {\n\tos.Exit(m.Run())\n}\n' clean
+table_row "go non-test Test-prefixed helper" x_test.go 'package p\nfunc TestHelper() {\n\tF()\n}\nfunc TestReal(t *testing.T) {\n\tt.Fatal("x")\n}\n' clean
+table_row "go t.Skip only" x_test.go 'package p\nfunc TestA(t *testing.T) {\n\tt.Skip("later")\n}\n' flag:TestA
+table_row "ts expect.assertions" a.test.ts 'it("a", () => {\n  expect.assertions(1);\n  f();\n});\n' clean
+table_row "ts expect in comment only" a.test.ts '// expect(x).toBe(1)\nit("a", () => { f(); });\n' flagfile
+table_row "ts skipped test" a.test.ts 'it.skip("a", () => { f(); });\n' flagfile
+table_row "ts real expect" a.test.ts 'it("a", () => { expect(f()).toBe(1); });\n' clean
+
 printf '\n%s\n' "$fail"
 exit "$fail"

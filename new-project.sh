@@ -16,6 +16,21 @@ kit="$(cd "$(dirname "$0")" && pwd)"
 
 die() { echo "new-project: $*" >&2; exit 1; }
 
+# --backfill PATH: copy helper scripts a generated project lacks. Never overwrites a file.
+if [ "${1:-}" = "--backfill" ]; then
+  target="${2:-}"
+  [ -n "$target" ] || die "usage: new-project.sh --backfill PATH"
+  [ -f "$target/.pairing-profiles" ] || { echo "new-project: $target has no .pairing-profiles; not a generated project" >&2; exit 2; }
+  mkdir -p "$target/scripts"
+  for f in check.sh misbehavior-check.sh assertion-check.sh plan-review.sh cross-review.sh review-call.sh cross-review.ps1; do
+    if [ ! -e "$target/scripts/$f" ]; then
+      cp "$kit/scripts/$f" "$target/scripts/$f"
+      echo "new-project: backfilled scripts/$f"
+    fi
+  done
+  exit 0
+fi
+
 path="${1:-}"
 [ -n "$path" ] || die "usage: new-project.sh PATH [go|python|web|fullstack|expo ...]"
 shift

@@ -88,21 +88,34 @@ if ! scan_staged_additions; then
   fail=1
 fi
 
-printf '\n######## misbehavior\n'
-if bash "$root/scripts/misbehavior-check.sh" "$root"; then
-  results="$results\n  misbehavior: PASS"
-else
-  results="$results\n  misbehavior: FAIL"
-  fail=1
-fi
+# Run a helper script as a stage. Exit 0 with a WARN/warning line in its output is labelled WARN;
+# exit 1 FAIL. A missing helper (older generated project) is a named WARN, FAIL when PAIRING_STRICT=1.
+helper_stage() {
+  local label="$1" script="$2" out rc
+  printf '\n######## %s\n' "$label"
+  if [ ! -f "$root/scripts/$script" ]; then
+    echo "$label: WARN: scripts/$script is missing (run: bash <kit>/new-project.sh --backfill $root)"
+    if [ "${PAIRING_STRICT:-}" = "1" ]; then
+      results="$results\n  $label: FAIL"; fail=1
+    else
+      results="$results\n  $label: WARN"
+    fi
+    return
+  fi
+  rc=0
+  out=$(bash "$root/scripts/$script" "$root" 2>&1) || rc=$?
+  printf '%s\n' "$out"
+  if [ "$rc" -ne 0 ]; then
+    results="$results\n  $label: FAIL"; fail=1
+  elif printf '%s\n' "$out" | grep -Eq 'WARN|warnings only'; then
+    results="$results\n  $label: WARN"
+  else
+    results="$results\n  $label: PASS"
+  fi
+}
 
-printf '\n######## assertions\n'
-if bash "$root/scripts/assertion-check.sh" "$root"; then
-  results="$results\n  assertions: PASS"
-else
-  results="$results\n  assertions: FAIL"
-  fail=1
-fi
+helper_stage misbehavior misbehavior-check.sh
+helper_stage assertions assertion-check.sh
 
 while read -r profile dir <&3; do
   [ -n "${profile:-}" ] || continue
