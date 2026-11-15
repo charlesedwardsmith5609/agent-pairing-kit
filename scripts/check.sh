@@ -1,9 +1,10 @@
 #!/usr/bin/env bash
-# Validation gate: runs the checks for every language in this project.
+# Validation gate: agent-misbehavior heuristics, then every language's checks.
 # The project's languages and directories are listed in .pairing-profiles.
 # Usage: bash scripts/check.sh
 # Staged additions are scanned with the same gitleaks command as the reviews.
 # A match warns. Set PAIRING_STRICT=1 to fail the gate. This is not a separate stage.
+# The same knob fails agent-misbehavior warnings.
 set -u
 root="$(cd "$(dirname "$0")/.." && pwd)"
 list="$root/.pairing-profiles"
@@ -86,6 +87,36 @@ if ! scan_staged_additions; then
   results="$results\n  staged secrets: FAIL"
   fail=1
 fi
+
+# Run a helper script as a stage. Exit 0 with a WARN/warning line in its output is labelled WARN;
+# exit 1 FAIL. A missing helper (older generated project) is a named WARN, FAIL when PAIRING_STRICT=1.
+helper_stage() {
+  local label="$1" script="$2" out rc
+  printf '\n######## %s\n' "$label"
+  if [ ! -f "$root/scripts/$script" ]; then
+    echo "$label: WARN: scripts/$script is missing (run: bash <kit>/new-project.sh --backfill $root)"
+    if [ "${PAIRING_STRICT:-}" = "1" ]; then
+      results="$results\n  $label: FAIL"; fail=1
+    else
+      results="$results\n  $label: WARN"
+    fi
+    return
+  fi
+  rc=0
+  out=$(bash "$root/scripts/$script" "$root" 2>&1) || rc=$?
+  printf '%s\n' "$out"
+  if [ "$rc" -ne 0 ]; then
+    results="$results\n  $label: FAIL"; fail=1
+  elif printf '%s\n' "$out" | grep -Eq 'WARN|warnings only'; then
+    results="$results\n  $label: WARN"
+  else
+    results="$results\n  $label: PASS"
+  fi
+}
+
+helper_stage misbehavior misbehavior-check.sh
+helper_stage assertions assertion-check.sh
+
 while read -r profile dir <&3; do
   [ -n "${profile:-}" ] || continue
   printf '\n######## %s (%s)\n' "$profile" "$dir"

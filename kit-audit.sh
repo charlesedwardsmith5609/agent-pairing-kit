@@ -75,7 +75,7 @@ if command -v gitleaks >/dev/null 2>&1; then
   have=$(gitleaks version 2>/dev/null | semver)
   ok gitleaks "${have:-installed}"
 else
-  warn gitleaks "not installed; reviews are sent without a secret scan (https://github.com/gitleaks/gitleaks)"
+  warn gitleaks "not installed; reviews are refused until it is installed (https://github.com/gitleaks/gitleaks)"
 fi
 
 # Go and govulncheck

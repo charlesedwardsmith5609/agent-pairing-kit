@@ -23,7 +23,7 @@ bash "$kit/new-project.sh" "$target" "$@"
 
 cd "$target"
 for f in AGENTS.md CLAUDE.md .pairing-profiles .gitignore .gitattributes \
-  scripts/check.sh scripts/plan-review.sh scripts/cross-review.sh scripts/review-call.sh \
+  scripts/check.sh scripts/misbehavior-check.sh scripts/assertion-check.sh scripts/plan-review.sh scripts/cross-review.sh scripts/review-call.sh \
   skills/review-checklist.md skills/plan-review-checklist.md \
   .cursor/rules/pairing-mode.mdc .claude/settings.json .claude/commands/check.md; do
   [ -f "$f" ] || fail "missing $f"
@@ -50,9 +50,21 @@ security_phrases=(
 for phrase in "${security_phrases[@]}"; do
   grep -qF "$phrase" CLAUDE.md || fail "CLAUDE.md missing: $phrase"
 done
+# A docs/ path in the working agreements must exist in the project or be named as a document of the pairing kit repository.
+# shellcheck disable=SC2016
+while IFS= read -r line; do
+  while IFS= read -r ref; do
+    [ -n "$ref" ] || continue
+    [ -e "$ref" ] && continue
+    printf '%s' "${line%%"$ref"*}" | grep -qi 'pairing kit repository' || fail "CLAUDE.md points at missing $ref without naming the pairing kit repository"
+  done < <(printf '%s\n' "$line" | grep -oE '`docs/[^`]+`' | tr -d '`')
+done < CLAUDE.md
 [ -z "$(git status --porcelain)" ] || fail "working tree not clean after setup"
 git log -1 --format=%s | grep -q 'agent pairing kit' || fail "unexpected initial commit"
 
 echo "smoke: running the project's own check on the empty project"
 bash scripts/check.sh || fail "scripts/check.sh failed on the empty project"
+echo "smoke: --backfill on a complete project changes nothing"
+bash "$kit/new-project.sh" --backfill "$target" || fail "--backfill failed"
+[ -z "$(git status --porcelain)" ] || fail "--backfill changed a complete project"
 echo "smoke: OK ($*)"

@@ -13,6 +13,7 @@
 # review falls back to openai when OPENAI_API_KEY is set.
 #
 # Before anything is sent, the request text is scanned with gitleaks (see review_scan_secrets).
+# If the scan cannot run or fails, nothing is sent.
 
 # Read the saved reviewer settings on every run, so a terminal opened before setreviewer or setkey
 # changed them can't send a stale model or key. --provider and --model still override them.
@@ -156,21 +157,15 @@ review_gitleaks_scan() {
 }
 
 # Scan the text about to leave this machine (the diff, or the plan plus requirements) for secrets.
-# A finding refuses the review and prints the redacted match. If gitleaks isn't installed this
-# only warns and the review goes ahead unscanned, unless REQUIRE_SECRET_SCAN=1, which refuses
-# (install: https://github.com/gitleaks/gitleaks).
+# Fails closed: a finding, a missing gitleaks, or a scanner failure all refuse the review and
+# nothing is sent (install: https://github.com/gitleaks/gitleaks).
 # Exit code 7 is ours: it tells "secrets found" apart from gitleaks failing for another reason.
 review_scan_secrets() {
   local file="$1" out rc=0
   out=$(review_gitleaks_scan "$file") || rc=$?
   if [ "$rc" -eq 127 ]; then
-    if [ "${REQUIRE_SECRET_SCAN:-0}" = 1 ]; then
-      echo "REQUIRE_SECRET_SCAN=1 but gitleaks is not installed. Nothing was sent." >&2
-      return 1
-    fi
-    echo "WARNING: gitleaks is not installed; sending this review to $REVIEW_USED_PROVIDER WITHOUT a secret scan." >&2
-    echo "         (set REQUIRE_SECRET_SCAN=1 to refuse reviews instead)" >&2
-    return 0
+    echo "gitleaks is not installed, so the secret scan cannot run. Nothing was sent." >&2
+    return 1
   fi
   [ "$rc" -eq 0 ] && return 0
   printf '%s\n' "$out" | tail -n 25 >&2

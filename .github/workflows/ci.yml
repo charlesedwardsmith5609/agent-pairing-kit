@@ -27,6 +27,16 @@ jobs:
         run: |
           bash tests/test-secret-scan.sh
           bash tests/test-staged-secret-scan.sh
+      - name: cross-review fails closed (stub API, fake gitleaks)
+        run: bash tests/test-cross-review.sh
+      - name: misbehavior check heuristics
+        run: bash tests/test-misbehavior-check.sh
+      - name: assertion scan
+        run: bash tests/test-assertion-check.sh
+      - name: check summary and backfill
+        run: bash tests/test-check-summary.sh
+      - name: docs drift
+        run: bash tests/test-docs.sh
 
   smoke:
     runs-on: ubuntu-latest
