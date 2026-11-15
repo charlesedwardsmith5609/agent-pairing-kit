@@ -189,4 +189,12 @@ else
   echo "skip: pwsh not installed; cross-review.ps1 was only compared as text"
 fi
 
+# curl must be called with connect and total timeouts so a stalled API cannot hang a review.
+init_repo; fake 0
+real_curl=$(command -v curl); mkdir -p "$work/curlbin"; cp "$work/bin/gitleaks" "$work/curlbin/gitleaks"
+printf '#!/bin/sh\nprintf "%%s\\n" "$*" >> "%s/curl.args"\nexec "%s" "$@"\n' "$work" "$real_curl" > "$work/curlbin/curl"
+chmod +x "$work/curlbin/curl"; : > "$work/curl.args"
+BIN_DIR=curlbin run_review
+if grep -q -- '--connect-timeout' "$work/curl.args" && grep -q -- '--max-time' "$work/curl.args"; then ok "curl is called with timeouts"; else bad "curl missing timeouts: $(head -c 200 "$work/curl.args")"; fi
+
 exit "$fail"
