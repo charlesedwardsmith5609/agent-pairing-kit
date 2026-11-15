@@ -75,6 +75,15 @@ run_check; check "out-of-plan warns exits 0" 0 $?
 check_out "out-of-plan message" "path outside plan ## Files: other.go" "$work/out"
 PAIRING_STRICT=1 run_check; check "out-of-plan fails when strict" 1 $?
 
+# --- deleted path outside the plan is reported ---
+setup_repo
+mkdir -p plans
+printf '# Step 1\n## Files\n- main.go\n- main_test.go\n' > plans/step-1.md
+printf 'x\n' > extra.go; git add extra.go plans; git commit -q -m extra
+rm extra.go
+run_check; check "deleted out-of-plan path exits 0" 0 $?
+check_out "deleted out-of-plan path reported" "path outside plan ## Files: extra.go" "$work/out"
+
 # --- no ## Files: skip plan-scope ---
 setup_repo
 mkdir -p plans
