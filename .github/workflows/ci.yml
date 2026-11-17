@@ -46,7 +46,7 @@ jobs:
         profile: [go, python, web, fullstack]
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-go@v5
+      - uses: actions/setup-go@v6
         if: matrix.profile == 'go' || matrix.profile == 'fullstack'
         with:
           go-version: stable
