@@ -66,7 +66,7 @@ Prerequisites are checked before anything is created: Go (plus gcc for `-race` a
 | `new-project.sh` | What `newproj` calls: `bash new-project.sh PATH [profile ...]` |
 | `tests/test-*.sh` | Unit tests: `tests/test-assertion-check.sh`, `tests/test-check-summary.sh` (summary labels and `new-project.sh --backfill`), `tests/test-cross-review.sh` (cross-review fails closed, with a stub API and fake gitleaks; also parses and runs the refusal paths of the `.ps1` under `pwsh` when it is installed), `tests/test-docs.sh`, `tests/test-misbehavior-check.sh`, `tests/test-skill-lint.sh` (skill lint rules and the `skills` stage), `tests/test-secret-scan.sh`, `tests/test-staged-secret-scan.sh` |
 | `tests/smoke-new-project.sh` | Creates a project in a temp dir, asserts the files it must get, runs its check, and checks that `--backfill` changes nothing. CI runs it for `go`, `python`, `web` and `fullstack` (not `expo`) |
-| `.github/workflows/ci.yml` | Three jobs: shellcheck on every tracked `*.sh`, the unit tests above (every `tests/test-*.sh`), and the smoke run. Dependabot updates the GitHub Actions versions |
+| `.github/workflows/ci.yml` | Three jobs: shellcheck on every tracked `*.sh`, the unit tests above (every `tests/test-*.sh`), and the smoke run. Dependabot updates the GitHub Actions versions, with a 7-day cooldown (DECISIONS.md, 2026-11-20) |
 | `legacy-windows/` | The original Go-only PowerShell setup and check, kept for reference |
 
 To add a language, create `profiles/<lang>/` with the same pieces (`agreements.md`, `review.md`, `check.sh`, `init.sh`, `gitignore`, `skills/`) and add it to the profile

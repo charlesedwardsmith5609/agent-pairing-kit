@@ -79,3 +79,13 @@ Options: no lint; structural lint in bash; lint plus model or live-agent checks.
 Choice: `scripts/skill-lint.sh`, bash and standard tools only. Rules: exactly one H1 outside code fences, a "Load before ..." / "Read when ..." / "Use this when" line within the first 10 non-blank lines after the H1, at most 6144 bytes, no heading text repeated across two skills of one profile, and a `scan-error` for anything it could not read. Warn by default, fail under `PAIRING_STRICT=1`. `check.sh` runs it as a `skills` stage only when `profiles/` exists; CI runs it strict. Installed copies in generated projects are not checked and the script is not copied into projects.
 
 Why: The largest skill is 4537 bytes (`profiles/go/skills/go-network-service.md`); 6144 leaves about 35% headroom and still catches a skill that doubles. Bytes track context cost better than lines. Implemented on the stated default (warn, strict fails) pending owner confirmation of the cap and of checking installed copies. The kit's own `scripts/check.sh` still exits 2 (no `.pairing-profiles` at the kit root); that is a separate owner question.
+
+## 2026-11-20: 7-day Dependabot cooldown
+
+Context: TLDR InfoSec 2026-11-18/19 reported a compromised release from an official publisher and a trusted-publishing compromise (opensourcemalware, stepsecurity); Chainguard advertises a cooldown. Those are the sources' claims; the decision does not depend on them. Provenance is not safety: a new release from a trusted source can still be malicious.
+
+Options: no cooldown (Dependabot already applies a 3-day default to version updates, per the GitHub Dependabot options reference); 7 days; longer for major versions.
+
+Choice: Dependabot cooldown of `default-days: 7` on the `github-actions` entry in `.github/dependabot.yml`. Implemented on the stated 7-day default, pending owner confirmation. Only `default-days` is set: the options reference shows the `github-actions` row supports default days but not the semver-bump keys, so no `semver-*-days`. The cooldown applies to version updates only; security updates are not delayed (same page). Read on docs.github.com on 2026-11-21; the last 86k characters of that page were not read, and nothing local proves Dependabot accepts the file (GitHub validates it on push).
+
+Why: A week lets the community catch a bad release before a pull request is opened, at the cost of updates arriving about a week later. The only ecosystem here is GitHub Actions, which are pinned by version tag, not by commit SHA.

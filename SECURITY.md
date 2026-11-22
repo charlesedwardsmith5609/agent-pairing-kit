@@ -6,7 +6,7 @@ Please report vulnerabilities through a private GitHub security advisory on this
 
 ## Scope
 
-This repository is a reference implementation: cross-provider plan and code review kit for AI-assisted development. Review defaults before using it in production. Never commit credentials. CI runs shellcheck and the tests; it does not run a secret scanner. Dependabot (`.github/dependabot.yml`) updates the GitHub Actions versions only. New projects also ship a documented tool-call allowlist and Claude Code deny rules for environ/env/secrets/metadata access; Cursor still relies on the agreements and the validation gate.
+This repository is a reference implementation: cross-provider plan and code review kit for AI-assisted development. Review defaults before using it in production. Never commit credentials. CI runs shellcheck and the tests; it does not run a secret scanner. Dependabot (`.github/dependabot.yml`) updates the GitHub Actions versions only, with a 7-day cooldown on version updates (security updates are not delayed; see DECISIONS.md, 2026-11-20). New projects also ship a documented tool-call allowlist and Claude Code deny rules for environ/env/secrets/metadata access; Cursor still relies on the agreements and the validation gate.
 
 ## Secrets in reviews
 

@@ -46,5 +46,16 @@ else
 fi
 has "$kit/README.md" 'docs/server-side-enforcement.md' "README links docs/server-side-enforcement.md"
 
+# Dependabot cooldown (plans/step-5.md, 5c): every ecosystem entry has cooldown.default-days: 7
+dep="$kit/.github/dependabot.yml"
+if awk '
+  /^  - package-ecosystem:/ { if (eco && !ok) bad = 1; eco = 1; ok = 0; incd = 0; next }
+  /^    cooldown:/ { incd = 1; next }
+  incd && /^      default-days: 7[ \t]*$/ { ok = 1; next }
+  /^    [^ ]/ { incd = 0 }
+  END { if (eco && !ok) bad = 1; exit (eco && !bad) ? 0 : 1 }
+' "$dep"; then ok "dependabot entries have cooldown default-days: 7"; else bad "dependabot entries have cooldown default-days: 7"; fi
+has "$kit/DECISIONS.md" 'Dependabot cooldown' "DECISIONS records the Dependabot cooldown"
+
 printf '\n%s\n' "$fail"
 exit "$fail"
