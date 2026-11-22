@@ -89,22 +89,23 @@ scan_file() {
 }
 
 shopt -s nullglob
-files=(profiles/*/skills/*.md)
-if [ "${#files[@]}" -eq 0 ]; then
-  # A skills dir that exists but cannot be listed is a scan error, not "no skills".
-  for d in profiles/*/skills; do
-    if [ -d "$d" ] && [ ! -x "$d" ]; then report "$d" scan-error "directory cannot be listed"; fi
-  done
-  if [ "$findings" -eq 0 ]; then
-    echo "skill-lint: no profiles/*/skills/*.md under $root; nothing checked"
-    exit 0
+# Every skills directory must be listable, whether or not other profiles matched.
+for d in profiles/*/skills; do
+  if [ -d "$d" ] && { [ ! -r "$d" ] || [ ! -x "$d" ]; }; then
+    report "$d" scan-error "directory cannot be listed"
   fi
+done
+files=(profiles/*/skills/*.md)
+if [ "${#files[@]}" -eq 0 ] && [ "$findings" -eq 0 ]; then
+  echo "skill-lint: no profiles/*/skills/*.md under $root; nothing checked"
+  exit 0
 fi
 
 heads=$(mktemp) || exit 2
 trap 'rm -f "$heads"' EXIT
 
 for f in "${files[@]}"; do
+  if [ ! -f "$f" ]; then report "$f" scan-error "not a regular file"; continue; fi
   if [ ! -r "$f" ]; then report "$f" scan-error "file is not readable"; continue; fi
   bytes=$(wc -c < "$f") || { report "$f" scan-error "wc failed"; continue; }
   rec=$(scan_file "$f") || { report "$f" scan-error "awk failed"; continue; }

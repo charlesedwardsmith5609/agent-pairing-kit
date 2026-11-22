@@ -67,6 +67,23 @@ else
   run unread strict; check "scan error strict rc" 1 "$rc"
 fi
 
+# 4d unreadable skills dir, with and without another readable profile
+mk nodir
+mkdir -p "$work/nodir/profiles/q/skills"
+chmod 000 "$work/nodir/profiles/q/skills"
+if [ -r "$work/nodir/profiles/q/skills" ]; then
+  echo "skip unreadable-dir (still readable, running as root)"
+else
+  run nodir; check_out "unreadable dir alongside readable profile" "scan-error" "$work/out"
+  run nodir strict; check "unreadable dir strict rc" 1 "$rc"
+  rm -rf "$work/nodir/profiles/p"
+  run nodir; check_out "unreadable dir alone is not 'nothing checked'" "scan-error" "$work/out"
+fi
+# 4e a FIFO named like a skill is a scan error, not a hang
+mk fifo
+rm "$work/fifo/profiles/p/skills/a.md"; mkfifo "$work/fifo/profiles/p/skills/a.md"
+run fifo; check_out "fifo skill is a scan-error" "scan-error" "$work/out"
+
 # 5 no when-to-read
 mk nowhen
 printf '# One\n\nSome text.\n\n## Testing\n' > "$work/nowhen/profiles/p/skills/a.md"
