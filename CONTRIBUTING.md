@@ -14,6 +14,8 @@ bash tests/test-cross-review.sh
 bash tests/test-misbehavior-check.sh
 bash tests/test-assertion-check.sh
 bash tests/test-check-summary.sh
+bash tests/test-skill-lint.sh
+PAIRING_STRICT=1 bash scripts/skill-lint.sh .
 bash tests/test-docs.sh
 bash tests/smoke-new-project.sh python
 ```

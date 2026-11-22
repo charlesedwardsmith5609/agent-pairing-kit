@@ -35,6 +35,10 @@ jobs:
         run: bash tests/test-assertion-check.sh
       - name: check summary and backfill
         run: bash tests/test-check-summary.sh
+      - name: skill lint (tests, then strict on the kit's own skills)
+        run: |
+          bash tests/test-skill-lint.sh
+          PAIRING_STRICT=1 bash scripts/skill-lint.sh .
       - name: docs drift
         run: bash tests/test-docs.sh
 
