@@ -48,10 +48,12 @@ run twotitles strict; check "two titles strict rc" 1 "$rc"
 
 # 4 # inside a fence is not a title
 mk fence
+# shellcheck disable=SC2016  # the backticks are literal Markdown fences
 printf '# One\n\nLoad before editing.\n\n```sh\n# a comment\n```\n' > "$work/fence/profiles/p/skills/a.md"
 run fence; check_no "fenced comment not a title" "title" "$work/out"
 # 4b mixed fences
 mk fence2
+# shellcheck disable=SC2016  # the backticks are literal Markdown fences
 printf '# One\n\nLoad before editing.\n\n```sh\n~~~\n# x\n```\n\n````md\n```\n# y\n````\n' > "$work/fence2/profiles/p/skills/a.md"
 run fence2; check_no "mixed fences keep block open" "title" "$work/out"
 check_out "mixed fences OK" "skill-lint: OK" "$work/out"
@@ -99,7 +101,8 @@ pad() { # pad TOTAL FILE
   head -c $(( $1 - have )) /dev/zero | tr '\0' 'x' >> "$2"
 }
 pad 6145 "$work/big/profiles/p/skills/a.md"
-[ "$(wc -c < "$work/big/profiles/p/skills/a.md")" -eq 6145 ]; check "fixture is 6145 bytes" 0 $?
+big_size=$(wc -c < "$work/big/profiles/p/skills/a.md")
+check "fixture is 6145 bytes" 6145 "$big_size"
 run big; check_out "oversize named" "size" "$work/out"
 run big strict; check "oversize strict rc" 1 "$rc"
 pad 6144 "$work/big/profiles/p/skills/a.md"
