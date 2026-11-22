@@ -69,3 +69,13 @@ Options: keep the reset and special-case known helper names; track test-level in
 Choice: A test starts at `def test_` and ends at the next non-blank line indented the same or less. Nested defs and classes do not end it. Triple-quoted strings, comment-only lines and lines starting with a closing bracket are not dedents. An assert inside a nested helper counts toward the enclosing test, even if the helper is never called (accepted gap; the check stays a cheap heuristic). Go (`func` at column 0 only) and TS/JS (whole-file check) were already unaffected.
 
 Why: Indentation is what Python itself uses, it needs no new dependency, and it removes the false positive without hiding tests that have no assertion.
+
+## 2026-11-17: Skill lint checks kit skills only, 6 KiB cap
+
+Context: the kit ships four skills (`profiles/*/skills/*.md`) that agents load whole into context. Nothing checked their shape. NVIDIA SkillEvaluator evaluates skills in tiers; the kit takes only the cheap structural tier (a claim from TLDR IT 2026-11-17, not something this decision depends on).
+
+Options: no lint; structural lint in bash; lint plus model or live-agent checks.
+
+Choice: `scripts/skill-lint.sh`, bash and standard tools only. Rules: exactly one H1 outside code fences, a "Load before ..." / "Read when ..." / "Use this when" line within the first 10 non-blank lines after the H1, at most 6144 bytes, no heading text repeated across two skills of one profile, and a `scan-error` for anything it could not read. Warn by default, fail under `PAIRING_STRICT=1`. `check.sh` runs it as a `skills` stage only when `profiles/` exists; CI runs it strict. Installed copies in generated projects are not checked and the script is not copied into projects.
+
+Why: The largest skill is 4537 bytes (`profiles/go/skills/go-network-service.md`); 6144 leaves about 35% headroom and still catches a skill that doubles. Bytes track context cost better than lines. Implemented on the stated default (warn, strict fails) pending owner confirmation of the cap and of checking installed copies. The kit's own `scripts/check.sh` still exits 2 (no `.pairing-profiles` at the kit root); that is a separate owner question.
