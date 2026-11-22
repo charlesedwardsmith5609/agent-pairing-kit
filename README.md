@@ -141,6 +141,7 @@ The kit lives in a public GitHub repo (MIT licensed, see `LICENSE`), and
 
 ## Notes
 
+- Written rules are requests; the repository host has to enforce merge and review rules. See [docs/server-side-enforcement.md](docs/server-side-enforcement.md) (kit-only note, not copied into projects).
 - Needs bash 4.4+ (the assertion scan exits 2 on older bash, which fails `scripts/check.sh`; this applies to generated projects too). On macOS install a newer bash.
 - **Refreshing helpers in an existing project.** `bash <kit>/new-project.sh --backfill PATH` copies
   only the helper scripts the project lacks (`check.sh`, `misbehavior-check.sh`,

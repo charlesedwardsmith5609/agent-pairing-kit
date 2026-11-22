@@ -31,5 +31,20 @@ for f in "$chk" "$kit/base/CLAUDE.md" "$kit/claude-commands/cross-review.md"; do
 done
 if grep -qF -- '--verify' "$chk"; then bad "review checklist has no --verify"; else ok "review checklist has no --verify"; fi
 
+# Server-side enforcement note (plans/step-5.md, 5b)
+ssd="$kit/docs/server-side-enforcement.md"
+if [ -f "$ssd" ]; then
+  ok "docs/server-side-enforcement.md exists"
+  for phrase in 'branch protection' 'CODEOWNERS' 'cannot'; do
+    has "$ssd" "$phrase" "server-side doc mentions $phrase"
+  done
+  while IFS= read -r p; do
+    if [ -e "$kit/$p" ]; then ok "server-side doc cites existing $p"; else bad "server-side doc cites missing $p"; fi
+  done < <(grep -oE '(scripts/[A-Za-z0-9_-]+\.sh|kit-audit\.sh)' "$ssd" | sort -u)
+else
+  bad "docs/server-side-enforcement.md exists"
+fi
+has "$kit/README.md" 'docs/server-side-enforcement.md' "README links docs/server-side-enforcement.md"
+
 printf '\n%s\n' "$fail"
 exit "$fail"
