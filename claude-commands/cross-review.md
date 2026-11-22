@@ -16,7 +16,9 @@ With no uncommitted changes and no base given, the script reviews the last commi
 If the milestone spans more than one commit, rerun it with a base that covers all of them.
 
 Then, for each finding, give a one-line assessment: AGREE or DISAGREE, with the reason, and the
-fix you would make if the human accepts it. Do not change any code. The human decides which
+fix you would make if the human accepts it. Check that each finding's `Quote:` line really appears
+in the diff. A finding with no quote, or a quote that is not in the diff, is UNVERIFIED: label it so
+instead of AGREE or DISAGREE, and do not act on it until the quote is found or the human decides. Do not change any code. The human decides which
 findings to act on.
 
 Judge findings in the context of the whole package, not just the files in the diff. Never infer

@@ -78,4 +78,7 @@ review can take a few minutes, so run them with a 10-minute timeout. Both fail c
 secret scan finds something, or gitleaks is missing or fails, nothing is sent. The cross-model
 review sends tracked changes only; name an untracked file with `--include PATH`. When
 findings come back, give your assessment of each one (agree or disagree, with a reason) and do not
-change the plan or the code until the human decides.
+change the plan or the code until the human decides. Each code-review finding should quote the
+diff line it is about; check that the quoted line really appears in the diff. A finding with no
+quote, or a quote that is not in the diff, is unverified: say so in your assessment and do not act
+on it until the quote is found or the human decides.

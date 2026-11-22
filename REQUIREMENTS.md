@@ -42,3 +42,11 @@ confirmation before step 1 starts.
 - S3. `scripts/check.sh` runs it as a stage named `skills` (only when `profiles/` exists) and reports it in the summary.
 - S4. No semantic or model checks, no live agent test, no new dependencies (bash, grep, awk, wc).
 - S5. Installed copies in generated projects (`skills/*.md`) are not checked.
+
+## TLDR 2026-11-20
+
+- E1. Each code-review finding carries the exact diff line(s) it is about, quoted, and one sentence naming the observation that would show the finding is wrong.
+- E2. A finding with no quoted line is unverified, for the human and for the agent's assessment.
+- E3. No `cross-review.sh --verify` second pass in this step (proposal only; one extra provider call per finding, up to 8).
+- D1. `docs/server-side-enforcement.md`: what the repository host must enforce, what the kit can and cannot check from a clone, each "kit checks X" claim citing a script; linked from README.
+- C1. `.github/dependabot.yml` gets a 7-day cooldown (pending owner confirmation); DECISIONS.md records it.

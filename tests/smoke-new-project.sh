@@ -28,6 +28,7 @@ for f in AGENTS.md CLAUDE.md .pairing-profiles .gitignore .gitattributes \
   .cursor/rules/pairing-mode.mdc .claude/settings.json .claude/commands/check.md; do
   [ -f "$f" ] || fail "missing $f"
 done
+grep -qF "Quote:" skills/review-checklist.md || fail "generated review checklist lacks Quote:"
 # fullstack is a new-project.sh mode: Go API plus web, not a check-script name.
 profiles=("$@")
 if [ "${#profiles[@]}" -eq 1 ] && [ "${profiles[0]}" = fullstack ]; then

@@ -22,5 +22,14 @@ for t in "$kit"/tests/test-*.sh; do
   has "$kit/README.md" "$n" "README lists $n"
 done
 
+# Review evidence fields (plans/step-5.md, 5a)
+chk="$kit/base/review-checklist.md"
+has "$chk" 'Quote:' "review checklist requires a Quote: field"
+has "$chk" 'Would be wrong if:' "review checklist requires a Would be wrong if: field"
+for f in "$chk" "$kit/base/CLAUDE.md" "$kit/claude-commands/cross-review.md"; do
+  if grep -qi 'unverified' "$f"; then ok "unverified rule in ${f#"$kit"/}"; else bad "unverified rule in ${f#"$kit"/}"; fi
+done
+if grep -qF -- '--verify' "$chk"; then bad "review checklist has no --verify"; else ok "review checklist has no --verify"; fi
+
 printf '\n%s\n' "$fail"
 exit "$fail"
