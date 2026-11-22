@@ -34,3 +34,11 @@ confirmation before step 1 starts.
 - R10. The Python assertion scan ends a test by indentation, so asserts in or after a nested
   helper count for the enclosing test (DECISIONS.md, 2026-11-14).
 - Out of scope: items listed as Suggestions, copying the devcontainer doc into generated projects.
+
+## Skill lint 2026-11-17
+
+- S1. `scripts/skill-lint.sh [ROOT]` checks every `ROOT/profiles/*/skills/*.md`: exactly one H1; a when-to-read line; a byte-size cap (6144); no heading text repeated across two skill files of the same profile.
+- S2. Findings warn (exit 0); under `PAIRING_STRICT=1` the same findings fail (exit 1). An unusable ROOT exits 2.
+- S3. `scripts/check.sh` runs it as a stage named `skills` (only when `profiles/` exists) and reports it in the summary.
+- S4. No semantic or model checks, no live agent test, no new dependencies (bash, grep, awk, wc).
+- S5. Installed copies in generated projects (`skills/*.md`) are not checked.

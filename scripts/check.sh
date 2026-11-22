@@ -2,6 +2,7 @@
 # Validation gate: agent-misbehavior heuristics, then every language's checks.
 # The project's languages and directories are listed in .pairing-profiles.
 # Usage: bash scripts/check.sh
+# In the kit repo (a profiles/ dir exists) a skills stage runs scripts/skill-lint.sh.
 # Staged additions are scanned with the same gitleaks command as the reviews.
 # A match warns. Set PAIRING_STRICT=1 to fail the gate. This is not a separate stage.
 # The same knob fails agent-misbehavior warnings.
@@ -116,6 +117,7 @@ helper_stage() {
 
 helper_stage misbehavior misbehavior-check.sh
 helper_stage assertions assertion-check.sh
+if [ -d "$root/profiles" ]; then helper_stage skills skill-lint.sh; fi
 
 while read -r profile dir <&3; do
   [ -n "${profile:-}" ] || continue

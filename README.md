@@ -41,6 +41,7 @@ Prerequisites are checked before anything is created: Go (plus gcc for `-race` a
 | `skills/*.md` | The skill for each language, plus `review-checklist.md` (code review) and `plan-review-checklist.md` (plan review), each combining base and language-specific review focus |
 | `scripts/check.sh` | The validation gate. Stages, in order: a secret scan of staged additions (shown in the summary only when it fails), `misbehavior`, `assertions`, then each language in `.pairing-profiles` (its script is `scripts/checks/<profile>.sh`). The summary labels each stage PASS, WARN or FAIL; exit 0 if nothing failed, 1 otherwise, 2 if `.pairing-profiles` is missing. `PAIRING_STRICT=1` turns warnings from the secret scan, `misbehavior` and `assertions` (and a missing helper script) into failures. `REQUIRE_SECRET_SCAN=1` makes the gate fail when the staged-additions scan cannot run (no gitleaks, or the scanner or `git diff` failed) |
 | `scripts/misbehavior-check.sh` | Deterministic checks over changed working-tree files (modified, untracked and staged), not diff text: skipped tests, edits to validation gate files, test-only changes, and (when the latest `plans/step-*.md` has a `## Files` list) paths outside the approved step. Warns; `PAIRING_STRICT=1` fails |
+| `scripts/skill-lint.sh` | Kit-only (not copied into projects): checks `profiles/*/skills/*.md` for exactly one H1, a "Load before ..." style line near the top, a 6144-byte cap and no heading repeated across skills of one profile. Warns; `PAIRING_STRICT=1` fails. `check.sh` runs it as a `skills` stage only when `profiles/` exists; CI runs it strict. Installed copies in projects are not checked |
 | `scripts/assertion-check.sh` | Scans test files on disk (skipping `.git`, virtualenvs, `node_modules`, `vendor` and build directories) and warns on tests with no assertion. `PAIRING_STRICT=1` fails, including on paths it could not scan. Exits 2 on an unusable root or bash older than 4.4 |
 | `scripts/review-call.sh` | Shared by both reviews: sends the request to Cursor, OpenAI or Anthropic |
 | `scripts/plan-review.sh` | Sends a plan in `plans/step-N.md`, plus `REQUIREMENTS.md`, the agreements and earlier plans, to a second AI provider before any code exists |
@@ -63,7 +64,7 @@ Prerequisites are checked before anything is created: Go (plus gcc for `-race` a
 | `kit-audit.sh` | What `kitaudit` runs: checks the tools and settings the kit depends on for drift. It is not copied into projects |
 | `audits/` | Monthly audit reports from the scheduled research task (empty until the first one is saved) |
 | `new-project.sh` | What `newproj` calls: `bash new-project.sh PATH [profile ...]` |
-| `tests/test-*.sh` | Unit tests: `tests/test-assertion-check.sh`, `tests/test-check-summary.sh` (summary labels and `new-project.sh --backfill`), `tests/test-cross-review.sh` (cross-review fails closed, with a stub API and fake gitleaks; also parses and runs the refusal paths of the `.ps1` under `pwsh` when it is installed), `tests/test-docs.sh`, `tests/test-misbehavior-check.sh`, `tests/test-secret-scan.sh`, `tests/test-staged-secret-scan.sh` |
+| `tests/test-*.sh` | Unit tests: `tests/test-assertion-check.sh`, `tests/test-check-summary.sh` (summary labels and `new-project.sh --backfill`), `tests/test-cross-review.sh` (cross-review fails closed, with a stub API and fake gitleaks; also parses and runs the refusal paths of the `.ps1` under `pwsh` when it is installed), `tests/test-docs.sh`, `tests/test-misbehavior-check.sh`, `tests/test-skill-lint.sh` (skill lint rules and the `skills` stage), `tests/test-secret-scan.sh`, `tests/test-staged-secret-scan.sh` |
 | `tests/smoke-new-project.sh` | Creates a project in a temp dir, asserts the files it must get, runs its check, and checks that `--backfill` changes nothing. CI runs it for `go`, `python`, `web` and `fullstack` (not `expo`) |
 | `.github/workflows/ci.yml` | Three jobs: shellcheck on every tracked `*.sh`, the unit tests above (every `tests/test-*.sh`), and the smoke run. Dependabot updates the GitHub Actions versions |
 | `legacy-windows/` | The original Go-only PowerShell setup and check, kept for reference |
@@ -167,7 +168,7 @@ The kit lives in a public GitHub repo (MIT licensed, see `LICENSE`), and
 - CI (`.github/workflows/ci.yml`) has three jobs: shellcheck on every tracked `*.sh`; the unit
   tests (`tests/test-secret-scan.sh`, `tests/test-staged-secret-scan.sh`,
   `tests/test-cross-review.sh`, `tests/test-misbehavior-check.sh`, `tests/test-assertion-check.sh`,
-  `tests/test-check-summary.sh`, `tests/test-docs.sh`); and a smoke run of `new-project.sh` for
+  `tests/test-check-summary.sh`, `tests/test-skill-lint.sh`, `tests/test-docs.sh`); and a smoke run of `new-project.sh` for
   `go`, `python`, `web` and `fullstack`. Run the same locally with
   `git ls-files '*.sh' | xargs shellcheck -x` and `bash tests/smoke-new-project.sh go`.
 - `expo` is not in the CI smoke matrix; run `bash tests/smoke-new-project.sh expo` yourself
