@@ -4,3 +4,7 @@ updates:
     directory: /
     schedule:
       interval: weekly
+    # 7-day cooldown on version updates (not security updates); pending owner confirmation.
+    # See DECISIONS.md, 2026-11-20.
+    cooldown:
+      default-days: 7

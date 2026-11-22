@@ -18,8 +18,12 @@ Check, in this order:
 
 Output format:
 
-- Up to 8 findings, most severe first. For each: severity (HIGH, MEDIUM, LOW), file and line or
-  function, what goes wrong in one concrete scenario, and the smallest fix.
+- Up to 8 findings, most severe first. For each: severity (HIGH, MEDIUM, LOW); file and line or
+  function; `Quote:` the exact line(s) from the diff the finding is about, copied verbatim (keep
+  the leading `+` or `-`); what goes wrong in one concrete scenario; the smallest fix; and
+  `Would be wrong if:` one sentence naming the observation (a test result, a caller, a guard
+  elsewhere) that would show this finding is wrong. A finding with no quoted line is treated as
+  unverified.
 - If you find nothing meaningful, say "No meaningful issues found" and name the single riskiest
   area you checked.
 - Be concise. No preamble, no summary of what the code does.

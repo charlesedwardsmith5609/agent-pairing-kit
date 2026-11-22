@@ -66,7 +66,7 @@ Prerequisites are checked before anything is created: Go (plus gcc for `-race` a
 | `new-project.sh` | What `newproj` calls: `bash new-project.sh PATH [profile ...]` |
 | `tests/test-*.sh` | Unit tests: `tests/test-assertion-check.sh`, `tests/test-check-summary.sh` (summary labels and `new-project.sh --backfill`), `tests/test-cross-review.sh` (cross-review fails closed, with a stub API and fake gitleaks; also parses and runs the refusal paths of the `.ps1` under `pwsh` when it is installed), `tests/test-docs.sh`, `tests/test-misbehavior-check.sh`, `tests/test-skill-lint.sh` (skill lint rules and the `skills` stage), `tests/test-secret-scan.sh`, `tests/test-staged-secret-scan.sh` |
 | `tests/smoke-new-project.sh` | Creates a project in a temp dir, asserts the files it must get, runs its check, and checks that `--backfill` changes nothing. CI runs it for `go`, `python`, `web` and `fullstack` (not `expo`) |
-| `.github/workflows/ci.yml` | Three jobs: shellcheck on every tracked `*.sh`, the unit tests above (every `tests/test-*.sh`), and the smoke run. Dependabot updates the GitHub Actions versions |
+| `.github/workflows/ci.yml` | Three jobs: shellcheck on every tracked `*.sh`, the unit tests above (every `tests/test-*.sh`), and the smoke run. Dependabot updates the GitHub Actions versions, with a 7-day cooldown (DECISIONS.md, 2026-11-20) |
 | `legacy-windows/` | The original Go-only PowerShell setup and check, kept for reference |
 
 To add a language, create `profiles/<lang>/` with the same pieces (`agreements.md`, `review.md`, `check.sh`, `init.sh`, `gitignore`, `skills/`) and add it to the profile
@@ -141,6 +141,7 @@ The kit lives in a public GitHub repo (MIT licensed, see `LICENSE`), and
 
 ## Notes
 
+- Written rules are requests; the repository host has to enforce merge and review rules. See [docs/server-side-enforcement.md](docs/server-side-enforcement.md) (kit-only note, not copied into projects).
 - Needs bash 4.4+ (the assertion scan exits 2 on older bash, which fails `scripts/check.sh`; this applies to generated projects too). On macOS install a newer bash.
 - **Refreshing helpers in an existing project.** `bash <kit>/new-project.sh --backfill PATH` copies
   only the helper scripts the project lacks (`check.sh`, `misbehavior-check.sh`,
